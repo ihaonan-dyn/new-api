@@ -3,7 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
-	"math/rand"
+	"math"
 	"one-api/common"
 	"sort"
 	"strings"
@@ -18,10 +18,21 @@ var channelSyncLock sync.RWMutex
 func InitChannelCache() {
 	newChannelId2channel := make(map[int]*Channel)
 	var channels []*Channel
-	DB.Where("status = ?", common.ChannelStatusEnabled).Find(&channels)
+	DB.Where("status = ?", common.ChannelStatusEnabled).Find(&channels) //=>
 	for _, channel := range channels {
 		newChannelId2channel[channel.Id] = channel
 	}
+
+	var tasks []*Task
+	DB.Where("status IN ?", []string{"QUEUED", "IN_PROGRESS", "NOT_START"}).Find(&tasks)
+	ChannelTasksMap := make(map[int]int)
+	for _, task := range tasks {
+		if _, ok := ChannelTasksMap[task.ChannelId]; !ok {
+			ChannelTasksMap[task.ChannelId] = 0
+		}
+		ChannelTasksMap[task.ChannelId] += 1
+	}
+
 	var abilities []*Ability
 	DB.Find(&abilities)
 	groups := make(map[string]bool)
@@ -34,6 +45,7 @@ func InitChannelCache() {
 		newGroup2model2channels[group] = make(map[string][]*Channel)
 	}
 	for _, channel := range channels {
+		channel.UnfinishedTasks = ChannelTasksMap[channel.Id]
 		newChannelsIDM[channel.Id] = channel
 		groups := strings.Split(channel.Group, ",")
 		for _, group := range groups {
@@ -114,25 +126,36 @@ func CacheGetRandomSatisfiedChannel(group string, model string, retry int) (*Cha
 		}
 	}
 
-	// 平滑系数
-	smoothingFactor := 10
-	// Calculate the total weight of all channels up to endIdx
-	totalWeight := 0
-	for _, channel := range targetChannels {
-		totalWeight += channel.GetWeight() + smoothingFactor
-	}
-	// Generate a random value in the range [0, totalWeight)
-	randomWeight := rand.Intn(totalWeight)
+	//// 平滑系数
+	//smoothingFactor := 10
+	//// Calculate the total weight of all channels up to endIdx
+	//totalWeight := 0
+	//for _, channel := range targetChannels {
+	//	totalWeight += channel.GetWeight() + smoothingFactor
+	//}
+	//// Generate a random value in the range [0, totalWeight)
+	//randomWeight := rand.Intn(totalWeight)
+	//
+	//// Find a channel based on its weight
+	//for _, channel := range targetChannels {
+	//	randomWeight -= channel.GetWeight() + smoothingFactor
+	//	if randomWeight < 0 {
+	//		return channel, nil
+	//	}
+	//}
+	//// return null if no channel is not found
+	//return nil, errors.New("channel not found")
 
-	// Find a channel based on its weight
-	for _, channel := range targetChannels {
-		randomWeight -= channel.GetWeight() + smoothingFactor
-		if randomWeight < 0 {
-			return channel, nil
+	minUnfinished := math.MaxInt32
+	var channel *Channel
+	for _, c := range targetChannels {
+		if c.UnfinishedTasks < minUnfinished {
+			minUnfinished = c.UnfinishedTasks
+			channel = c
 		}
 	}
-	// return null if no channel is not found
-	return nil, errors.New("channel not found")
+
+	return channel, nil
 }
 
 func CacheGetChannel(id int) (*Channel, error) {
