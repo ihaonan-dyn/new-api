@@ -11,6 +11,9 @@ const (
 const (
 	SunoActionMusic  = "MUSIC"
 	SunoActionLyrics = "LYRICS"
+
+	AliActionImages = "IMAGE"
+	AliActionVideo  = "VIDEO"
 )
 
 var SunoModel2Action = map[string]string{

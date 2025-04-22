@@ -161,6 +161,7 @@ func VideoHelper(c *gin.Context) *dto.OpenAIErrorWithStatusCode {
 	task := model.InitTask(constant.TaskPlatformAli, taskRelayInfo)
 	task.TaskID = videoResponse.TaskId
 	task.Quota = quota
+	task.Action = constant.AliActionVideo
 	var err1 error
 	for i := 0; i < 5; i++ {
 		if err1 = task.Insert(); err1 == nil {
