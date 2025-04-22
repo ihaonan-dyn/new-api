@@ -3,7 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
-	"math"
+	"math/rand"
 	"one-api/common"
 	"sort"
 	"strings"
@@ -126,36 +126,39 @@ func CacheGetRandomSatisfiedChannel(group string, model string, retry int) (*Cha
 		}
 	}
 
-	//// 平滑系数
-	//smoothingFactor := 10
-	//// Calculate the total weight of all channels up to endIdx
-	//totalWeight := 0
-	//for _, channel := range targetChannels {
-	//	totalWeight += channel.GetWeight() + smoothingFactor
-	//}
-	//// Generate a random value in the range [0, totalWeight)
-	//randomWeight := rand.Intn(totalWeight)
-	//
-	//// Find a channel based on its weight
-	//for _, channel := range targetChannels {
-	//	randomWeight -= channel.GetWeight() + smoothingFactor
-	//	if randomWeight < 0 {
-	//		return channel, nil
-	//	}
-	//}
-	//// return null if no channel is not found
-	//return nil, errors.New("channel not found")
+	// 平滑系数
+	smoothingFactor := 10
+	// 未完成任务的影响系数 (可以根据需要调整)
+	taskFactor := 2
 
-	minUnfinished := math.MaxInt32
-	var channel *Channel
-	for _, c := range targetChannels {
-		if c.UnfinishedTasks < minUnfinished {
-			minUnfinished = c.UnfinishedTasks
-			channel = c
+	// Calculate the total weight of all channels
+	totalWeight := 0
+	minWeight := 1 // 确保最小权重为1
+	for _, channel := range targetChannels {
+		// 计算实际权重: 基础权重 + 平滑系数 - (未完成任务数 * 任务影响系数)
+		weight := channel.GetWeight() + smoothingFactor - taskFactor*channel.UnfinishedTasks
+		if weight < minWeight {
+			weight = minWeight // 设置最小权重，避免负数
 		}
+		totalWeight += weight
 	}
 
-	return channel, nil
+	// Generate a random value in the range [0, totalWeight)
+	randomWeight := rand.Intn(totalWeight)
+
+	// Find a channel based on its weight
+	for _, channel := range targetChannels {
+		weight := channel.GetWeight() + smoothingFactor - taskFactor*channel.UnfinishedTasks
+		if weight < minWeight {
+			weight = minWeight
+		}
+		randomWeight -= weight
+		if randomWeight < 0 {
+			return channel, nil
+		}
+	}
+	// return null if no channel is not found
+	return nil, errors.New("channel not found")
 }
 
 func CacheGetChannel(id int) (*Channel, error) {

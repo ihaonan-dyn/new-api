@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/samber/lo"
 	"io"
 	"net/http"
 	"one-api/common"
 	"one-api/model"
 	"one-api/relay/channel"
+
+	"github.com/samber/lo"
 )
 
 func HandleGetTask(baseUrl, key, taskId string, adaptor channel.TaskAdaptor) (aliResp *AliResponse, err error) {
@@ -57,7 +58,6 @@ func HandleUpdateTask(ctx context.Context, task *model.Task, aliResp *AliRespons
 
 	task.Status = lo.If(model.TaskStatus(newTask.Status) != "", newTask.Status).Else(task.Status)
 	task.FailReason = lo.If(newTask.FailReason != "", newTask.FailReason).Else(task.FailReason)
-	task.SubmitTime = lo.If(newTask.SubmitTime != 0, newTask.SubmitTime).Else(task.SubmitTime)
 	task.StartTime = lo.If(newTask.StartTime != 0, newTask.StartTime).Else(task.StartTime)
 	task.FinishTime = lo.If(newTask.FinishTime != 0, newTask.FinishTime).Else(task.FinishTime)
 
@@ -94,7 +94,7 @@ func HandleUpdateTask(ctx context.Context, task *model.Task, aliResp *AliRespons
 	return
 }
 func checkTaskNeedUpdate(oldTask *model.Task, newTask *model.Task) bool {
-	return oldTask.SubmitTime != newTask.SubmitTime || oldTask.StartTime != newTask.StartTime || oldTask.FinishTime != newTask.FinishTime ||
+	return oldTask.StartTime != newTask.StartTime || oldTask.FinishTime != newTask.FinishTime ||
 		oldTask.Status != newTask.Status || oldTask.FailReason != newTask.FailReason
 }
 
