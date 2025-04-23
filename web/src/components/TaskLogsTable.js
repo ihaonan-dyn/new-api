@@ -44,7 +44,7 @@ function renderDuration(submit_time, finishTime) {
     const durationMs = finish - start;
 
     // 将时间差转换为秒，并保留一位小数
-    const durationSec = (durationMs / 1000).toFixed(1);
+    const durationSec = (durationMs).toFixed(1);
 
     // 设置颜色：大于60秒则为红色，小于等于60秒则为绿色
     const color = durationSec > 60 ? 'red' : 'green';
@@ -306,6 +306,10 @@ const LogsTable = () => {
                 return <Label basic color='grey'> 生成音乐 </Label>;
             case 'LYRICS':
                 return <Label basic color='pink'> 生成歌词 </Label>;
+            case 'IMAGE':
+                return <Label basic color='blue'> 生成图片 </Label>;
+            case 'VIDEO':
+                return <Label basic color='purple'> 生成视频 </Label>;
 
             default:
                 return <Label basic color='black'> 未知 </Label>;
@@ -316,6 +320,8 @@ const LogsTable = () => {
         switch (type) {
             case "suno":
                 return <Label basic color='green'> Suno </Label>;
+            case "ali":
+                return <Label basic color='teal'> Genbo </Label>;
             default:
                 return <Label basic color='black'> 未知 </Label>;
         }
