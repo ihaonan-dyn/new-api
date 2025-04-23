@@ -302,3 +302,50 @@ func SumUsedTaskQuota(queryParams SyncTaskQueryParams) (stat []TaskQuotaUsage, e
 	err = query.Select("mode, sum(quota) as count").Group("mode").Find(&stat).Error
 	return stat, err
 }
+
+type APITaskReq struct {
+	PageNum  int `form:"pageNum,required"`
+	PageSize int `form:"pageSize,required"`
+}
+
+// API返回给客户的任务结果
+type APITaskData struct {
+	TaskID     string     `json:"task_id"`
+	Status     TaskStatus `json:"task_status"` //任务状态
+	FailReason string     `json:"fail_reason"` //失败原因
+	TaskResult any        `json:"task_result"`
+	CreatedAt  int64      `json:"created_at"` //任务创建时间 单位s
+	UpdatedAt  int64      `json:"updated_at"` //任务更新时间 单位s
+}
+
+// API返回给客户的TaskResult
+type VideoTaskResult struct {
+	URL string `json:"url"`
+}
+type ImageTaskResult struct {
+	URL []string `json:"url"`
+}
+
+// python返回的任务结果
+type SelfTaskData struct {
+	Code  string `json:"code"`
+	Usage struct {
+		InputTokens  int `json:"input_tokens"`
+		TotalTokens  int `json:"total_tokens"`
+		OutputTokens int `json:"output_tokens"`
+	} `json:"usage"`
+	Output struct {
+		Text    string `json:"text"`
+		Results []struct {
+			Url string `json:"url"`
+		} `json:"results"`
+		TaskId        string `json:"task_id"`
+		EndTime       string `json:"end_time"`
+		SubmitTime    string `json:"submit_time"`
+		TaskStatus    string `json:"task_status"`
+		FinishReason  string `json:"finish_reason"`
+		ScheduledTime string `json:"scheduled_time"`
+	} `json:"output"`
+	Message   string `json:"message"`
+	RequestId string `json:"request_id"`
+}
