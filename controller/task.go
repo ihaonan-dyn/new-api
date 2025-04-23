@@ -407,7 +407,6 @@ func GetImageTask(c *gin.Context) {
 	taskId := c.Param("id")
 	//校验用户
 	userId := c.GetInt("id")
-	//TODO 筛选类型
 	originTask, exist, err := model.GetByTaskId(userId, taskId)
 	if err != nil {
 		requestId := c.GetString(common.RequestIdKey)
@@ -419,10 +418,10 @@ func GetImageTask(c *gin.Context) {
 		})
 		return
 	}
-	if !exist {
+	if !exist || originTask.Action != constant.AliActionImages {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": gin.H{
-				"message": "用户未提交过该任务",
+				"message": "用户未提交过该生图任务",
 				"type":    "task_not_exist",
 			},
 		})
@@ -460,15 +459,18 @@ func GetImageTaskList(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
+		return
 	}
 
 	//校验用户
 	userId := c.GetInt("id")
 
-	//TODO 筛选类型
-	queryParams := model.SyncTaskQueryParams{}
+	//筛选图片类型
+	queryParams := model.SyncTaskQueryParams{Action: constant.AliActionImages}
 
-	originTasks := model.TaskGetAllUserTask(userId, req.PageSize, req.PageNum, queryParams)
+	//计算跳过数据
+	offset := (req.PageNum - 1) * req.PageSize
+	originTasks := model.TaskGetAllUserTask(userId, offset, req.PageSize, queryParams)
 
 	// 构造返回的结果
 	resp := make([]model.APITaskData, 0)
@@ -500,9 +502,8 @@ func GetImageTaskList(c *gin.Context) {
 
 func GetVideoTask(c *gin.Context) {
 	taskId := c.Param("id")
-	//校验用户
+	//校验用户和类型
 	userId := c.GetInt("id")
-	//TODO 筛选类型
 	originTask, exist, err := model.GetByTaskId(userId, taskId)
 	if err != nil {
 		requestId := c.GetString(common.RequestIdKey)
@@ -514,10 +515,10 @@ func GetVideoTask(c *gin.Context) {
 		})
 		return
 	}
-	if !exist {
+	if !exist || originTask.Action != constant.AliActionVideo {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": gin.H{
-				"message": "用户未提交过该任务",
+				"message": "用户未提交过该视频任务",
 				"type":    "task_not_exist",
 			},
 		})
@@ -555,15 +556,17 @@ func GetVideoTaskList(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
+		return
 	}
 
 	//校验用户
 	userId := c.GetInt("id")
 
-	//TODO 筛选类型
-	queryParams := model.SyncTaskQueryParams{}
-
-	originTasks := model.TaskGetAllUserTask(userId, req.PageSize, req.PageNum, queryParams)
+	//筛选视频类型
+	queryParams := model.SyncTaskQueryParams{Action: constant.AliActionVideo}
+	//计算跳过数据
+	offset := (req.PageNum - 1) * req.PageSize
+	originTasks := model.TaskGetAllUserTask(userId, offset, req.PageSize, queryParams)
 
 	//执行完成，获取结果
 	resp := make([]model.APITaskData, 0)

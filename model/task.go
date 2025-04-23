@@ -304,8 +304,8 @@ func SumUsedTaskQuota(queryParams SyncTaskQueryParams) (stat []TaskQuotaUsage, e
 }
 
 type APITaskReq struct {
-	PageNum  int `form:"pageNum,required"`
-	PageSize int `form:"pageSize,required"`
+	PageNum  int `form:"pageNum" binding:"required"`
+	PageSize int `form:"pageSize" binding:"required"`
 }
 
 // API返回给客户的任务结果
