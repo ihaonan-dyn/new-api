@@ -24,11 +24,11 @@ func SetRelayRouter(router *gin.Engine) {
 		//图像生成
 		playgroundRouter.POST("/images/generations", controller.Playground)
 		//查询生图任务
-		playgroundRouter.GET("/images/generations/:id", controller.GetImageTask)
+		playgroundRouter.POST("/images/generations/:id", controller.GetImageTask)
 		//视频生成
 		playgroundRouter.POST("/videos/generations", controller.Playground)
 		//查询视频任务
-		playgroundRouter.GET("/videos/generations/:id", controller.GetVideoTask)
+		playgroundRouter.POST("/videos/generations/:id", controller.GetVideoTask)
 	}
 	relayV1Router := router.Group("/v1")
 	relayV1Router.Use(middleware.TokenAuth())
