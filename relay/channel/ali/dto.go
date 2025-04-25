@@ -116,5 +116,6 @@ type AliVideoRequest struct {
 		PromptExtend bool   `json:"prompt_extend,omitempty"`
 		Seed         int64  `json:"seed,omitempty"`
 		Size         string `json:"size,omitempty"`
+		Resolution   string `json:"resolution,omitempty"`
 	} `json:"parameters,omitempty"`
 }

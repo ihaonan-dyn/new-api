@@ -231,6 +231,10 @@ var defaultModelPrice = map[string]float64{
 	"mj_upscale":        0.05,
 	"swap_face":         0.05,
 	"mj_upload":         0.05,
+	"wanx2.1-t2v-turbo": 0.24,
+	"wanx2.1-t2v-plus":  0.7,
+	"wanx2.1-i2v-turbo": 0.24,
+	"wanx2.1-i2v-plus":  0.7,
 }
 
 var (

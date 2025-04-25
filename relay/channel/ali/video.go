@@ -21,6 +21,7 @@ func oaiVideo2Ali(request dto.VideoRequest) *AliVideoRequest {
 	videoRequest.Parameters.PromptExtend = request.PromptExtend
 	videoRequest.Parameters.Seed = request.Seed
 	videoRequest.Parameters.Size = request.Size
+	videoRequest.Parameters.Resolution = request.Resolution
 
 	return &videoRequest
 }

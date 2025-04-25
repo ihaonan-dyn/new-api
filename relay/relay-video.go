@@ -75,7 +75,39 @@ func VideoHelper(c *gin.Context) *dto.OpenAIErrorWithStatusCode {
 
 	VideoRequest.Model = relayInfo.UpstreamModelName
 
-	//TODO The amount is not realized first
+	//quota
+	priceData, err := helper.ModelPriceHelper(c, relayInfo, 0, 0)
+	if err != nil {
+		return service.OpenAIErrorWrapperLocal(err, "model_price_error", http.StatusInternalServerError)
+	}
+	if !priceData.UsePrice {
+		// modelRatio 16 = modelPrice $0.04
+		// per 1 modelRatio = $0.04 / 16
+		priceData.ModelPrice = 0.0025 * priceData.ModelRatio
+	}
+
+	userQuota, err := model.GetUserQuota(relayInfo.UserId, false)
+
+	//时长默认5s
+	durationRatio := 5.0
+	if VideoRequest.Model == "wanx2.1-t2v-plus" || VideoRequest.Model == "wanx2.1-t2v-turbo" { //文生视频仅支持5s
+		durationRatio = 5.0
+	} else if VideoRequest.Model == "wanx2.1-i2v-turbo" || VideoRequest.Model == "wanx2.1-i2v-plus" { //图生视频支持3 4 5
+		if VideoRequest.Duration == 3 {
+			durationRatio = 3.0
+		} else if VideoRequest.Duration == 4 {
+			durationRatio = 4.0
+		} else { //默认5s
+			durationRatio = 5.0
+		}
+	}
+
+	priceData.ModelPrice *= durationRatio
+	quota := int(priceData.ModelPrice * priceData.GroupRatio * common.QuotaPerUnit)
+
+	if userQuota-quota < 0 {
+		return service.OpenAIErrorWrapperLocal(fmt.Errorf("image pre-consumed quota failed, user quota: %s, need quota: %s", common.FormatQuota(userQuota), common.FormatQuota(quota)), "insufficient_user_quota", http.StatusForbidden)
+	}
 
 	adaptor := GetAdaptor(relayInfo.ApiType)
 	if adaptor == nil {
@@ -128,7 +160,8 @@ func VideoHelper(c *gin.Context) *dto.OpenAIErrorWithStatusCode {
 	// insert task
 	task := model.InitTask(constant.TaskPlatformAli, taskRelayInfo)
 	task.TaskID = videoResponse.TaskId
-	//task.Quota =
+	task.Quota = quota
+	task.Action = constant.AliActionVideo
 	var err1 error
 	for i := 0; i < 5; i++ {
 		if err1 = task.Insert(); err1 == nil {
@@ -140,5 +173,14 @@ func VideoHelper(c *gin.Context) *dto.OpenAIErrorWithStatusCode {
 	if err1 != nil {
 		return service.OpenAIErrorWrapperLocal(err, "sql_insert_failed", http.StatusInternalServerError)
 	}
+
+	//任务插入数据库成功，扣费
+	usage := &dto.Usage{
+		PromptTokens: int(durationRatio),
+		TotalTokens:  int(durationRatio),
+	}
+	logContent := fmt.Sprintf("时长 %ds", int(durationRatio))
+	postConsumeQuota(c, relayInfo, usage, 0, userQuota, priceData, logContent)
+
 	return nil
 }

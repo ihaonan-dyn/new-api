@@ -402,3 +402,194 @@ func GetUserTask(c *gin.Context) {
 		"data":    logs,
 	})
 }
+
+func GetImageTask(c *gin.Context) {
+	taskId := c.Param("id")
+	//校验用户
+	userId := c.GetInt("id")
+	originTask, exist, err := model.GetByTaskId(userId, taskId)
+	if err != nil {
+		requestId := c.GetString(common.RequestIdKey)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": gin.H{
+				"message": common.MessageWithRequestId("数据库繁忙，查找任务失败", requestId),
+				"type":    "get_task_failed",
+			},
+		})
+		return
+	}
+	if !exist || originTask.Action != constant.AliActionImages {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": gin.H{
+				"message": "用户未提交过该生图任务",
+				"type":    "task_not_exist",
+			},
+		})
+		return
+	}
+
+	// 构造返回的结果
+	resp := model.APITaskData{
+		TaskID:     originTask.TaskID,
+		Status:     originTask.Status,
+		FailReason: originTask.FailReason,
+		TaskResult: nil,
+		CreatedAt:  originTask.CreatedAt,
+		UpdatedAt:  originTask.UpdatedAt,
+	}
+
+	//执行完成，获取结果
+	if resp.Status == model.TaskStatusSuccess {
+		imageTaskResult := model.ImageTaskResult{}
+		var data model.SelfTaskData
+		json.Unmarshal(originTask.Data, &data)
+		for _, result := range data.Output.Results {
+			imageTaskResult.URL = append(imageTaskResult.URL, result.Url)
+		}
+		resp.TaskResult = imageTaskResult
+	}
+
+	c.JSON(200, resp)
+}
+
+func GetImageTaskList(c *gin.Context) {
+	var req model.APITaskReq
+	err := c.ShouldBind(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	//校验用户
+	userId := c.GetInt("id")
+
+	//筛选图片类型
+	queryParams := model.SyncTaskQueryParams{Action: constant.AliActionImages}
+
+	//计算跳过数据
+	offset := (req.PageNum - 1) * req.PageSize
+	originTasks := model.TaskGetAllUserTask(userId, offset, req.PageSize, queryParams)
+
+	// 构造返回的结果
+	resp := make([]model.APITaskData, 0)
+	for _, task := range originTasks {
+		one := model.APITaskData{
+			TaskID:     task.TaskID,
+			Status:     task.Status,
+			FailReason: task.FailReason,
+			TaskResult: nil,
+			CreatedAt:  task.CreatedAt,
+			UpdatedAt:  task.UpdatedAt,
+		}
+		if task.Status == model.TaskStatusSuccess {
+			imageTaskResult := model.ImageTaskResult{}
+			var data model.SelfTaskData
+			json.Unmarshal(task.Data, &data)
+			for _, result := range data.Output.Results {
+				imageTaskResult.URL = append(imageTaskResult.URL, result.Url)
+			}
+			one.TaskResult = imageTaskResult
+		}
+		resp = append(resp, one)
+	}
+
+	//执行完成，获取结果
+
+	c.JSON(200, resp)
+}
+
+func GetVideoTask(c *gin.Context) {
+	taskId := c.Param("id")
+	//校验用户和类型
+	userId := c.GetInt("id")
+	originTask, exist, err := model.GetByTaskId(userId, taskId)
+	if err != nil {
+		requestId := c.GetString(common.RequestIdKey)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": gin.H{
+				"message": common.MessageWithRequestId("数据库繁忙，查找任务失败", requestId),
+				"type":    "get_task_failed",
+			},
+		})
+		return
+	}
+	if !exist || originTask.Action != constant.AliActionVideo {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": gin.H{
+				"message": "用户未提交过该视频任务",
+				"type":    "task_not_exist",
+			},
+		})
+		return
+	}
+
+	// 构造返回的结果
+	resp := model.APITaskData{
+		TaskID:     originTask.TaskID,
+		Status:     originTask.Status,
+		FailReason: originTask.FailReason,
+		TaskResult: nil,
+		CreatedAt:  originTask.CreatedAt,
+		UpdatedAt:  originTask.UpdatedAt,
+	}
+
+	//执行完成，获取结果
+	if resp.Status == model.TaskStatusSuccess {
+		videoTaskResult := model.VideoTaskResult{}
+		var data model.SelfTaskData
+		json.Unmarshal(originTask.Data, &data)
+		for _, result := range data.Output.Results {
+			videoTaskResult.URL = result.Url
+		}
+		resp.TaskResult = videoTaskResult
+	}
+
+	c.JSON(200, resp)
+}
+
+func GetVideoTaskList(c *gin.Context) {
+	var req model.APITaskReq
+	err := c.ShouldBind(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	//校验用户
+	userId := c.GetInt("id")
+
+	//筛选视频类型
+	queryParams := model.SyncTaskQueryParams{Action: constant.AliActionVideo}
+	//计算跳过数据
+	offset := (req.PageNum - 1) * req.PageSize
+	originTasks := model.TaskGetAllUserTask(userId, offset, req.PageSize, queryParams)
+
+	//执行完成，获取结果
+	resp := make([]model.APITaskData, 0)
+	for _, task := range originTasks {
+		one := model.APITaskData{
+			TaskID:     task.TaskID,
+			Status:     task.Status,
+			FailReason: task.FailReason,
+			TaskResult: nil,
+			CreatedAt:  task.CreatedAt,
+			UpdatedAt:  task.UpdatedAt,
+		}
+		if task.Status == model.TaskStatusSuccess {
+			videoTaskResult := model.VideoTaskResult{}
+			var data model.SelfTaskData
+			json.Unmarshal(task.Data, &data)
+			for _, result := range data.Output.Results {
+				videoTaskResult.URL = result.Url
+			}
+			one.TaskResult = videoTaskResult
+		}
+		resp = append(resp, one)
+	}
+
+	c.JSON(200, resp)
+}

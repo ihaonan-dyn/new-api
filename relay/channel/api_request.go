@@ -21,6 +21,8 @@ func SetupApiRequestHeader(info *common.RelayInfo, c *gin.Context, req *http.Hea
 		req.Set("X-DashScope-Async", "enable")
 		req.Set("Content-Type", "application/json")
 	} else if info.RelayMode == constant.RelayModeVideoGenerations {
+		req.Set("X-DashScope-Async", "enable")
+		req.Set("Content-Type", "application/json")
 	} else if info.RelayMode == constant.RelayModeImagesGenerations {
 		req.Set("X-DashScope-Async", "enable")
 		req.Set("Content-Type", "application/json")

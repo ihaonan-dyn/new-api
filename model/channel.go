@@ -36,6 +36,7 @@ type Channel struct {
 	OtherInfo         string  `json:"other_info"`
 	Tag               *string `json:"tag" gorm:"index"`
 	Setting           *string `json:"setting" gorm:"type:text"`
+	UnfinishedTasks   int     `json:"unfinished_tasks"`
 }
 
 func (channel *Channel) GetModels() []string {

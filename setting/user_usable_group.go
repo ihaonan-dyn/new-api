@@ -8,6 +8,7 @@ import (
 var userUsableGroups = map[string]string{
 	"default": "默认分组",
 	"vip":     "vip分组",
+	"svip":    "svip分组",
 }
 
 func GetUserUsableGroupsCopy() map[string]string {

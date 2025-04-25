@@ -18,10 +18,21 @@ var channelSyncLock sync.RWMutex
 func InitChannelCache() {
 	newChannelId2channel := make(map[int]*Channel)
 	var channels []*Channel
-	DB.Where("status = ?", common.ChannelStatusEnabled).Find(&channels)
+	DB.Where("status = ?", common.ChannelStatusEnabled).Find(&channels) //=>
 	for _, channel := range channels {
 		newChannelId2channel[channel.Id] = channel
 	}
+
+	var tasks []*Task
+	DB.Where("status IN ?", []string{"QUEUED", "IN_PROGRESS", "NOT_START"}).Find(&tasks)
+	ChannelTasksMap := make(map[int]int)
+	for _, task := range tasks {
+		if _, ok := ChannelTasksMap[task.ChannelId]; !ok {
+			ChannelTasksMap[task.ChannelId] = 0
+		}
+		ChannelTasksMap[task.ChannelId] += 1
+	}
+
 	var abilities []*Ability
 	DB.Find(&abilities)
 	groups := make(map[string]bool)
@@ -34,6 +45,7 @@ func InitChannelCache() {
 		newGroup2model2channels[group] = make(map[string][]*Channel)
 	}
 	for _, channel := range channels {
+		channel.UnfinishedTasks = ChannelTasksMap[channel.Id]
 		newChannelsIDM[channel.Id] = channel
 		groups := strings.Split(channel.Group, ",")
 		for _, group := range groups {
@@ -116,17 +128,31 @@ func CacheGetRandomSatisfiedChannel(group string, model string, retry int) (*Cha
 
 	// 平滑系数
 	smoothingFactor := 10
-	// Calculate the total weight of all channels up to endIdx
+	// 未完成任务的影响系数 (可以根据需要调整)
+	taskFactor := 2
+
+	// Calculate the total weight of all channels
 	totalWeight := 0
+	minWeight := 1 // 确保最小权重为1
 	for _, channel := range targetChannels {
-		totalWeight += channel.GetWeight() + smoothingFactor
+		// 计算实际权重: 基础权重 + 平滑系数 - (未完成任务数 * 任务影响系数)
+		weight := channel.GetWeight() + smoothingFactor - taskFactor*channel.UnfinishedTasks
+		if weight < minWeight {
+			weight = minWeight // 设置最小权重，避免负数
+		}
+		totalWeight += weight
 	}
+
 	// Generate a random value in the range [0, totalWeight)
 	randomWeight := rand.Intn(totalWeight)
 
 	// Find a channel based on its weight
 	for _, channel := range targetChannels {
-		randomWeight -= channel.GetWeight() + smoothingFactor
+		weight := channel.GetWeight() + smoothingFactor - taskFactor*channel.UnfinishedTasks
+		if weight < minWeight {
+			weight = minWeight
+		}
+		randomWeight -= weight
 		if randomWeight < 0 {
 			return channel, nil
 		}

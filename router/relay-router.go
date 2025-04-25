@@ -21,6 +21,14 @@ func SetRelayRouter(router *gin.Engine) {
 	playgroundRouter.Use(middleware.UserAuth())
 	{
 		playgroundRouter.POST("/chat/completions", controller.Playground)
+		//图像生成
+		playgroundRouter.POST("/images/generations", controller.Playground)
+		//查询生图任务
+		playgroundRouter.GET("/images/generations/:id", controller.GetImageTask)
+		//视频生成
+		playgroundRouter.POST("/videos/generations", controller.Playground)
+		//查询视频任务
+		playgroundRouter.GET("/videos/generations/:id", controller.GetVideoTask)
 	}
 	relayV1Router := router.Group("/v1")
 	relayV1Router.Use(middleware.TokenAuth())
@@ -34,6 +42,14 @@ func SetRelayRouter(router *gin.Engine) {
 	{
 		//http router
 		httpRouter := relayV1Router.Group("")
+		//查询生图任务（单个）
+		httpRouter.GET("/images/generations/:id", controller.GetImageTask)
+		// 查询生图任务（列表）
+		httpRouter.GET("/images/generations", controller.GetImageTaskList)
+		//查询视频任务（单个）
+		httpRouter.GET("/videos/generations/:id", controller.GetVideoTask)
+		// 查询视频任务（列表）
+		httpRouter.GET("/videos/generations", controller.GetVideoTaskList)
 		httpRouter.Use(middleware.Distribute())
 		httpRouter.POST("/messages", controller.RelayClaude)
 		httpRouter.POST("/completions", controller.Relay)

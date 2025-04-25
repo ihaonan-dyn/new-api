@@ -8,6 +8,7 @@ type VideoRequest struct {
 	PromptExtend bool   `json:"prompt_extend"`
 	Seed         int64  `json:"seed,omitempty"`
 	Size         string `json:"size"`
+	Resolution   string `json:"resolution"`
 }
 
 //type VideoResponse struct {

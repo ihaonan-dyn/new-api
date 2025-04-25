@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/samber/lo"
 	"io"
 	"net/http"
 	"one-api/common"
 	"one-api/model"
 	"one-api/relay/channel"
+
+	"github.com/samber/lo"
 )
 
 func HandleGetTask(baseUrl, key, taskId string, adaptor channel.TaskAdaptor) (aliResp *AliResponse, err error) {
@@ -38,6 +39,10 @@ func HandleGetTask(baseUrl, key, taskId string, adaptor channel.TaskAdaptor) (al
 		return
 	}
 
+	if aliResp.Output.TaskId == "" {
+		aliResp.Output.TaskId = taskId
+	}
+
 	return
 }
 
@@ -53,7 +58,6 @@ func HandleUpdateTask(ctx context.Context, task *model.Task, aliResp *AliRespons
 
 	task.Status = lo.If(model.TaskStatus(newTask.Status) != "", newTask.Status).Else(task.Status)
 	task.FailReason = lo.If(newTask.FailReason != "", newTask.FailReason).Else(task.FailReason)
-	task.SubmitTime = lo.If(newTask.SubmitTime != 0, newTask.SubmitTime).Else(task.SubmitTime)
 	task.StartTime = lo.If(newTask.StartTime != 0, newTask.StartTime).Else(task.StartTime)
 	task.FinishTime = lo.If(newTask.FinishTime != 0, newTask.FinishTime).Else(task.FinishTime)
 
@@ -64,17 +68,15 @@ func HandleUpdateTask(ctx context.Context, task *model.Task, aliResp *AliRespons
 		if err != nil {
 			common.LogError(ctx, "error update user quota cache: "+err.Error())
 		} else {
-			//TODO The amount is not realized first
-
-			//quota := task.Quota
-			//if quota != 0 {
-			//	err = model.IncreaseUserQuota(task.UserId, quota, false)
-			//	if err != nil {
-			//		common.LogError(ctx, "fail to increase user quota: "+err.Error())
-			//	}
-			//	logContent := fmt.Sprintf("异步任务执行失败 %s，补偿 %s", task.TaskID, common.LogQuota(quota))
-			//	model.RecordLog(task.UserId, model.LogTypeSystem, logContent)
-			//}
+			quota := task.Quota
+			if quota != 0 {
+				err = model.IncreaseUserQuota(task.UserId, quota, false)
+				if err != nil {
+					common.LogError(ctx, "fail to increase user quota: "+err.Error())
+				}
+				logContent := fmt.Sprintf("异步任务执行失败 %s，补偿 %s", task.TaskID, common.LogQuota(quota))
+				model.RecordLog(task.UserId, model.LogTypeSystem, logContent)
+			}
 		}
 	}
 
@@ -92,7 +94,7 @@ func HandleUpdateTask(ctx context.Context, task *model.Task, aliResp *AliRespons
 	return
 }
 func checkTaskNeedUpdate(oldTask *model.Task, newTask *model.Task) bool {
-	return oldTask.SubmitTime != newTask.SubmitTime || oldTask.StartTime != newTask.StartTime || oldTask.FinishTime != newTask.FinishTime ||
+	return oldTask.StartTime != newTask.StartTime || oldTask.FinishTime != newTask.FinishTime ||
 		oldTask.Status != newTask.Status || oldTask.FailReason != newTask.FailReason
 }
 
