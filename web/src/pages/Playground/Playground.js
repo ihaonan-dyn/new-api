@@ -48,7 +48,7 @@ const Playground = () => {
   ];
 
   const [inputs, setInputs] = useState({
-    model: 'gpt-4o-mini',
+    model: '',
     group: '',
     max_tokens: 0,
     temperature: 0,
@@ -89,6 +89,7 @@ const Playground = () => {
         value: model,
       }));
       setModels(localModelOptions);
+      handleInputChange('model', localModelOptions[0].value || '');
     } else {
       showError(t(message));
     }

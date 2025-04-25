@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig, transformWithEsbuild } from 'vite';
+import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -21,6 +22,11 @@ export default defineConfig({
     },
     react(),
   ],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'), // 把 `@` 映射到 `./src` 目录
+    },
+  },
   optimizeDeps: {
     force: true,
     esbuildOptions: {
@@ -55,11 +61,11 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://10.1.31.106:3000',
         changeOrigin: true,
       },
       '/pg': {
-        target: 'http://localhost:3000',
+        target: 'http://10.1.31.106:3000',
         changeOrigin: true,
       },
     },

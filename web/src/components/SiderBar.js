@@ -35,6 +35,9 @@ import { useSetTheme, useTheme } from '../context/Theme/index.js';
 import { StyleContext } from '../context/Style/index.js';
 import Text from '@douyinfe/semi-ui/lib/es/typography/text';
 
+
+
+
 // 自定义侧边栏按钮样式
 const navItemStyle = {
   borderRadius: '6px',
@@ -77,8 +80,11 @@ const routerMap = {
   detail: '/detail',
   pricing: '/pricing',
   task: '/task',
-  playground: '/playground',
+  // playground: '/playground',
   personal: '/personal',
+  playground_image: '/playground/image',
+  playground_video: '/playground/video',
+  playground_textChat: 'playground'
 };
 
 const SiderBar = () => {
@@ -107,6 +113,7 @@ const SiderBar = () => {
     }
     return keys;
   }, [chatItems]);
+
 
   // 使用useMemo一次性计算所有图标样式
   const iconStyles = useMemo(() => {
@@ -225,7 +232,26 @@ const SiderBar = () => {
       {
         text: 'Playground',
         itemKey: 'playground',
-        to: '/playground',
+        items:[
+          {
+            text: '文本对话',
+            itemKey: 'playground_textChat',
+            to: '/playground',
+            icon: <IconSetting />,
+          },
+          {
+            text: '图像生成',
+            itemKey: 'playground_image',
+            to: '/playground/image',
+            icon: <IconSetting />,
+          },
+          {
+            text: '视频生成',
+            itemKey: 'playground_video',
+            to: '/playground/video',
+            icon: <IconSetting />,
+          },
+        ],
         icon: <IconCommentStroked />,
       },
       // {
@@ -372,7 +398,7 @@ const SiderBar = () => {
               style={{ textDecoration: 'none' }}
               to={routerMapState[props.itemKey] || routerMap[props.itemKey]}
             >
-              {itemElement}
+               {itemElement}
             </Link>
           );
         }}
