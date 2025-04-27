@@ -63,6 +63,12 @@ func main() {
 		}
 	}()
 
+	// 初始化minio
+	err = common.InitMinioClient()
+	if err != nil {
+		common.FatalLog("failed to initialize Minio: " + err.Error())
+	}
+
 	// Initialize Redis
 	err = common.InitRedisClient()
 	if err != nil {
