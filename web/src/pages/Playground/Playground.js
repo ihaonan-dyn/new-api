@@ -48,7 +48,7 @@ const Playground = () => {
   ];
 
   const [inputs, setInputs] = useState({
-    model: '',
+    model: 'Qwen2.5-7B-Instruct',
     group: '',
     max_tokens: 0,
     temperature: 0,
@@ -58,7 +58,10 @@ const Playground = () => {
   const [status, setStatus] = useState({});
   const [systemPrompt, setSystemPrompt] = useState('You are a helpful assistant. You can help me by answering my questions. You can also ask me questions.');
   const [message, setMessage] = useState(defaultMessage);
-  const [models, setModels] = useState([]);
+  const [models, setModels] = useState([{
+    label: 'Qwen2.5-7B-Instruct',
+    value: 'Qwen2.5-7B-Instruct',
+  }]);
   const [groups, setGroups] = useState([]);
   const [showSettings, setShowSettings] = useState(true);
   const [styleState, styleDispatch] = useContext(StyleContext);
@@ -76,7 +79,7 @@ const Playground = () => {
       status = JSON.parse(status);
       setStatus(status);
     }
-    loadModels();
+    // loadModels();
     loadGroups();
   }, []);
 
