@@ -162,6 +162,12 @@ func VideoHelper(c *gin.Context) *dto.OpenAIErrorWithStatusCode {
 	task.TaskID = videoResponse.TaskId
 	task.Quota = quota
 	task.Action = constant.AliActionVideo
+	// 转换为JSON字符串
+	jsonDataInput, err := json.Marshal(*VideoRequest)
+	if err != nil {
+		return service.OpenAIErrorWrapperLocal(err, "json_marshal_failed", http.StatusInternalServerError)
+	}
+	task.Properties.Input = string(jsonDataInput)
 	var err1 error
 	for i := 0; i < 5; i++ {
 		if err1 = task.Insert(); err1 == nil {

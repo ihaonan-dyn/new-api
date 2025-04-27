@@ -31,6 +31,8 @@ func SetRelayRouter(router *gin.Engine) {
 		playgroundRouter.POST("/videos/generations", controller.Playground)
 		//查询视频任务
 		playgroundRouter.GET("/videos/generations/:id", controller.GetVideoTask)
+		//历史视频任务
+		playgroundRouter.GET("/videos/generations", controller.GetVideoTaskHistory)
 	}
 	relayV1Router := router.Group("/v1")
 	relayV1Router.Use(middleware.TokenAuth())
