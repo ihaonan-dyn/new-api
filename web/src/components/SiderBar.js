@@ -234,19 +234,19 @@ const SiderBar = () => {
         itemKey: 'playground',
         items:[
           {
-            text: '文本对话',
+            text: t('文本对话'),
             itemKey: 'playground_textChat',
             to: '/playground',
             icon: <IconSetting />,
           },
           {
-            text: '图像生成',
+            text: t('图像生成'),
             itemKey: 'playground_image',
             to: '/playground/image',
             icon: <IconSetting />,
           },
           {
-            text: '视频生成',
+            text: t('视频生成'),
             itemKey: 'playground_video',
             to: '/playground/video',
             icon: <IconSetting />,
