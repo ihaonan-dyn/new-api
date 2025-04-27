@@ -157,8 +157,9 @@ const HeaderBar = () => {
     await API.get('/api/user/logout');
     showSuccess(t('注销成功!'));
     userDispatch({ type: 'logout' });
-    localStorage.removeItem('user');
-    navigate('/login');
+    localStorage.clear();
+    // navigate('/login');
+    window.location.reload();
   }
 
   const handleNewYearClick = () => {
