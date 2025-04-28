@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"one-api/constant"
+	"one-api/dto"
 	commonRelay "one-api/relay/common"
 	"time"
 )
@@ -352,9 +353,8 @@ type SelfTaskData struct {
 
 // 生成视频历史
 type VideoTaskHistory struct {
-	Model     string     `json:"model"`      //模型
-	TaskID    string     `json:"task_id"`    //任务id
-	Prompt    string     `json:"prompt"`     //提示词
-	Status    TaskStatus `json:"status"`     //任务状态
-	CreatedAt int64      `json:"created_at"` //任务创建时间 单位s
+	TaskID    string           `json:"task_id"`    //任务id
+	Status    TaskStatus       `json:"status"`     //任务状态
+	CreatedAt int64            `json:"created_at"` //任务创建时间 单位s
+	Input     dto.VideoRequest `json:"input"`      //用户入参
 }

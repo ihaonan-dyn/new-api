@@ -619,11 +619,10 @@ func GetVideoTaskHistory(c *gin.Context) {
 		var data dto.VideoRequest
 		json.Unmarshal([]byte(task.Properties.Input), &data)
 		resp = append(resp, model.VideoTaskHistory{
-			Model:     data.Model,
 			TaskID:    task.TaskID,
-			Prompt:    data.Prompt,
 			Status:    task.Status,
 			CreatedAt: task.CreatedAt,
+			Input:     data,
 		})
 	}
 

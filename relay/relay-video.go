@@ -73,6 +73,7 @@ func VideoHelper(c *gin.Context) *dto.OpenAIErrorWithStatusCode {
 		return service.OpenAIErrorWrapperLocal(err, "model_mapped_error", http.StatusInternalServerError)
 	}
 
+	VideoRequest.Group = relayInfo.Group
 	VideoRequest.Model = relayInfo.UpstreamModelName
 
 	//quota

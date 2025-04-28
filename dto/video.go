@@ -1,14 +1,15 @@
 package dto
 
 type VideoRequest struct {
+	Group        string `json:"group,omitempty"`
 	Model        string `json:"model"`
 	Prompt       string `json:"prompt" binding:"required"`
-	ImgUrl       string `json:"img_url"`
-	Duration     int64  `json:"parameters"`
-	PromptExtend bool   `json:"prompt_extend"`
+	ImgUrl       string `json:"img_url,omitempty"`
+	Duration     int64  `json:"parameters,omitempty"`
+	PromptExtend bool   `json:"prompt_extend,omitempty"`
 	Seed         int64  `json:"seed,omitempty"`
-	Size         string `json:"size"`
-	Resolution   string `json:"resolution"`
+	Size         string `json:"size,omitempty"`
+	Resolution   string `json:"resolution,omitempty"`
 }
 
 //type VideoResponse struct {

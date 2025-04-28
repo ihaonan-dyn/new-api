@@ -86,6 +86,7 @@ func ImageHelper(c *gin.Context) *dto.OpenAIErrorWithStatusCode {
 		return service.OpenAIErrorWrapperLocal(err, "model_mapped_error", http.StatusInternalServerError)
 	}
 
+	imageRequest.Group = relayInfo.Group
 	imageRequest.Model = relayInfo.UpstreamModelName
 
 	priceData, err := helper.ModelPriceHelper(c, relayInfo, 0, 0)
