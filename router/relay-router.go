@@ -25,10 +25,14 @@ func SetRelayRouter(router *gin.Engine) {
 		playgroundRouter.POST("/images/generations", controller.Playground)
 		//查询生图任务
 		playgroundRouter.GET("/images/generations/:id", controller.GetImageTask)
+		//上传图片
+		playgroundRouter.POST("/upload/image", controller.UploadImage)
 		//视频生成
 		playgroundRouter.POST("/videos/generations", controller.Playground)
 		//查询视频任务
 		playgroundRouter.GET("/videos/generations/:id", controller.GetVideoTask)
+		//历史视频任务
+		playgroundRouter.GET("/videos/generations", controller.GetVideoTaskHistory)
 	}
 	relayV1Router := router.Group("/v1")
 	relayV1Router.Use(middleware.TokenAuth())

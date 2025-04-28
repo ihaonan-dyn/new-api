@@ -1,6 +1,7 @@
 package dto
 
 type ImageRequest struct {
+	Group          string `json:"group,omitempty"`
 	Model          string `json:"model"`
 	Prompt         string `json:"prompt" binding:"required"`
 	N              int    `json:"n,omitempty"`

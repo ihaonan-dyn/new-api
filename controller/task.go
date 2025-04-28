@@ -593,3 +593,38 @@ func GetVideoTaskList(c *gin.Context) {
 
 	c.JSON(200, resp)
 }
+
+func GetVideoTaskHistory(c *gin.Context) {
+	var req model.APITaskReq
+	err := c.ShouldBind(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	//校验用户
+	userId := c.GetInt("id")
+
+	//筛选视频类型
+	queryParams := model.SyncTaskQueryParams{Action: constant.AliActionVideo}
+	//计算跳过数据
+	offset := (req.PageNum - 1) * req.PageSize
+	originTasks := model.TaskGetAllUserTask(userId, offset, req.PageSize, queryParams)
+
+	resp := make([]model.VideoTaskHistory, 0)
+	for _, task := range originTasks {
+		//获取模型和提示词
+		var data dto.VideoRequest
+		json.Unmarshal([]byte(task.Properties.Input), &data)
+		resp = append(resp, model.VideoTaskHistory{
+			TaskID:    task.TaskID,
+			Status:    task.Status,
+			CreatedAt: task.CreatedAt,
+			Input:     data,
+		})
+	}
+
+	c.JSON(200, resp)
+}
