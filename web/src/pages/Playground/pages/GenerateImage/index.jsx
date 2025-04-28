@@ -14,11 +14,10 @@ import {
 } from '@douyinfe/semi-ui';
 import classNames from 'classnames';
 import React, { useContext, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import PageContainer from './Styled';
+import { t } from 'i18next';
 
 function GenerateImage() {
-  const { t } = useTranslation();
   const [userState, userDispatch] = useContext(UserContext);
   // 提交状态
   const [submitLoading, setSubmitLoading] = useState(false);

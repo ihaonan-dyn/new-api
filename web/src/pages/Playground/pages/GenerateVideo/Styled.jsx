@@ -17,12 +17,36 @@ const PageContainer = styled.main`
     width: 320px;
     padding: 20px;
     flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    /* 切换侧边栏 */
+    > .tabs {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      > .tab {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 32px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        background-color: var(--semi-color-fill-0);
+        &:hover {
+          background-color: var(--semi-color-primary-light-default);
+        }
+        &.active {
+          background-color: var(--semi-color-primary-light-default);
+          font-weight: 600;
+        }
+      }
+    }
 
     > .sec {
-      &:not(:last-child) {
-        margin-bottom: 10px;
-      }
-
       > .title {
         margin-bottom: 2px;
         display: flex;
@@ -60,6 +84,17 @@ const PageContainer = styled.main`
       > .content {
         .semi-select {
           width: 100%;
+        }
+      }
+
+      /* 必填 */
+      &.required {
+        .title {
+          &::before {
+            content: '*';
+            color: #ff4d4f;
+            margin-right: 4px;
+          }
         }
       }
 
@@ -169,6 +204,47 @@ const PageContainer = styled.main`
           }
         }
       }
+
+      /* 上传图片 */
+      &.upload-image {
+        .trigger-btn {
+          width: 100%;
+          height: 32px;
+          position: relative;
+          margin-bottom: 10px;
+          .file-input {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            &::-webkit-file-upload-button {
+              cursor: pointer;
+            }
+            &::file-selector-button {
+              cursor: pointer;
+            }
+            cursor: pointer;
+            left: 0;
+            opacity: 0;
+          }
+        }
+        .preview{
+          aspect-ratio: 1;
+          position: relative;
+          .semi-image{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            >img{
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+            }
+          }
+        }
+      }
     }
   }
 
@@ -189,16 +265,16 @@ const PageContainer = styled.main`
       position: relative;
       overflow: hidden;
 
-      .video-container{
+      .video-container {
         height: 100%;
         width: 100%;
-        >video{
+        > video {
           width: 100%;
           height: 100%;
           /* object-fit: contain; */
         }
       }
-      .loading-mask{
+      .loading-mask {
         position: absolute;
         top: 0;
         left: 0;
@@ -209,7 +285,7 @@ const PageContainer = styled.main`
         display: flex;
         justify-content: center;
         align-items: center;
-        .semi-spin-wrapper svg{
+        .semi-spin-wrapper svg {
           width: 40px;
           height: 40px;
         }
@@ -231,7 +307,7 @@ const PageContainer = styled.main`
     }
     .input-area {
       position: relative;
-      .semi-input-textarea{
+      .semi-input-textarea {
         padding-right: 60px;
       }
       .btn {

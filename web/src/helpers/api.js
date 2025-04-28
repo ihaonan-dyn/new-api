@@ -11,6 +11,7 @@ export let API = axios.create({
   }
 });
 
+
 export function updateAPI() {
   API = axios.create({
     baseURL: import.meta.env.VITE_REACT_APP_SERVER_URL

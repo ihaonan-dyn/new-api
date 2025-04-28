@@ -1,22 +1,26 @@
+import { UserContext } from '@/context/User/index';
 import { API } from '@/helpers';
+import { renderGroupOption, truncateText } from '@/helpers/render.js';
+import { IconAlertCircle, IconSend } from '@douyinfe/semi-icons';
 import {
-  IconAlertCircle,
-  IconSend
-} from '@douyinfe/semi-icons';
-import {
+  Image,
   Select,
   Spin,
   TextArea,
-  Tooltip
+  Tooltip,
+  Typography,
+  Button,
 } from '@douyinfe/semi-ui';
 import classNames from 'classnames';
-import React, { useEffect, useState } from 'react';
+import { t } from 'i18next';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import PageContainer from './Styled';
 import generateTaskStore from '@/store/generateTaskStore';
 
 function GenerateVideo() {
   // 提交状态
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [userState] = useContext(UserContext);
   /* 模型 */
   const modelOptions = [
     {
@@ -24,16 +28,14 @@ function GenerateVideo() {
       value: 'wan2.1模型',
     },
   ];
-  const [model, setModel] = useState('wan2.1模型');
 
-  /* 比例 */
   const sizeOptions = [
     {
       label: '16:9',
       value: '1280*720',
       tipText: '1280x720',
       iconStyle: {
-        aspectRatio: 16/9,
+        aspectRatio: 16 / 9,
       },
     },
     {
@@ -41,7 +43,7 @@ function GenerateVideo() {
       value: '720*1280',
       tipText: '720x1280',
       iconStyle: {
-        aspectRatio: 9/16,
+        aspectRatio: 9 / 16,
       },
     },
     {
@@ -57,7 +59,7 @@ function GenerateVideo() {
       value: '832*1088',
       tipText: '832x1088',
       iconStyle: {
-        aspectRatio: 4/5,
+        aspectRatio: 4 / 5,
       },
     },
     {
@@ -65,14 +67,14 @@ function GenerateVideo() {
       value: '1088*832',
       tipText: '1088x832',
       iconStyle: {
-        aspectRatio: 5/4,
+        aspectRatio: 5 / 4,
       },
     },
   ];
-  const [size, setSize] = useState(sizeOptions[0].value);
 
   /* 提示词 */
   // 推荐词
+  const [prompt, setPrompt] = useState('');
   const promptTags = [
     {
       value:
@@ -89,30 +91,334 @@ function GenerateVideo() {
       value: `In a vast, boundless desert, a female warrior stands at the center of the composition. Her figure contrasts sharply with the endless sand dunes, dressed in futuristic, post-apocalyptic armor adorned with sci-fi elements. She turns her head towards the camera, her gaze deep and mysterious, as if concealing a secret. The style of the artwork is inspired by the film Dune, evoking a sense of desolation and future aesthetics. The desert sky is painted in soft hues, with the distant dunes glistening in golden light. The overall tone of the piece is composed and powerful`,
     },
   ];
-  const [prompt, setPrompt] = useState('');
 
-  /* SSE */
-  const [taskInfo, setTaskInfo] = useState({
-    url: '',
+  const [taskId, setTaskId] = useState(null);
+  /* 视频url */
+  const [url, setUrl] = useState('');
+
+  /* 分组 */
+  const [groups, setGroups] = useState([]);
+  const loadGroups = async () => {
+    let res = await API.get(`/api/user/self/groups`);
+    const { success, message, data } = res.data;
+    if (success) {
+      let localGroupOptions = Object.entries(data).map(([group, info]) => ({
+        label: truncateText(info.desc, '50%'),
+        value: group,
+        ratio: info.ratio,
+        fullLabel: info.desc, // 保存完整文本用于tooltip
+      }));
+
+      if (localGroupOptions.length === 0) {
+        localGroupOptions = [
+          {
+            label: t('用户分组'),
+            value: '',
+            ratio: 1,
+          },
+        ];
+      } else {
+        const localUser = JSON.parse(localStorage.getItem('user'));
+        const userGroup =
+          (userState.user && userState.user.group) ||
+          (localUser && localUser.group);
+
+        if (userGroup) {
+          const userGroupIndex = localGroupOptions.findIndex(
+            (g) => g.value === userGroup,
+          );
+          if (userGroupIndex > -1) {
+            const userGroupOption = localGroupOptions.splice(
+              userGroupIndex,
+              1,
+            )[0];
+            localGroupOptions.unshift(userGroupOption);
+          }
+        }
+      }
+
+      setGroups(localGroupOptions);
+      handleChangeTextInputs({
+        group: localGroupOptions[0]?.value || '',
+      });
+      handleChangeImageInputs({
+        group: localGroupOptions[0]?.value || '',
+      });
+    } else {
+      showError(t(message));
+    }
+  };
+
+  /* 文生视频组件 */
+  const [videoFromTextInputs, setVideoFromTextInputs] = useState({
+    model: 'wan2.1模型',
+    size: sizeOptions[0].value,
+    group: '',
   });
+
+  /**
+   * 更改文生视频入参
+   * @param { {model: string; size:string; group: string } } params
+   */
+  const handleChangeTextInputs = (params) => {
+    setVideoFromTextInputs({ ...videoFromTextInputs, ...params });
+  };
+
+  const TextGenerate = {
+    aside: () => {
+      return (
+        <>
+          <section className='sec'>
+            <div className={'title'}>
+              <span className={'txt'}>
+                <Typography.Text strong>{t('分组')}：</Typography.Text>
+              </span>
+            </div>
+            <div className={'content'}>
+              <Select
+                placeholder={t('请选择分组')}
+                name='group'
+                required
+                selection
+                onChange={(value) => {
+                  handleChangeTextInputs({
+                    group: value,
+                  });
+                }}
+                value={videoFromTextInputs.group}
+                autoComplete='new-password'
+                optionList={groups}
+                renderOptionItem={renderGroupOption}
+                style={{ width: '100%' }}
+              />
+            </div>
+          </section>
+          <section className='sec'>
+            <div className={'title'}>
+              <span className={'txt'}>
+                <Typography.Text strong>{t('模型')}：</Typography.Text>
+              </span>
+            </div>
+            <div className={'content'}>
+              <Select
+                onChange={(value) => {
+                  handleChangeTextInputs({ model: value });
+                }}
+                optionList={modelOptions}
+                value={videoFromTextInputs.model}
+              ></Select>
+            </div>
+          </section>
+          <section className='sec size'>
+            <div className='title'>
+              <span className='txt'>
+                <Typography.Text strong>{t('视频尺寸')}：</Typography.Text>
+              </span>
+              <Tooltip content={t('生成视频的长宽比。')}>
+                <IconAlertCircle />
+              </Tooltip>
+            </div>
+            <div className={'content'}>
+              <ul className='tags'>
+                {sizeOptions.map((item, index) => (
+                  <Tooltip key={index} content={item.tipText}>
+                    <li
+                      className={classNames({
+                        item: true,
+                        active: item.value === videoFromTextInputs.size,
+                      })}
+                      onClick={() => {
+                        handleChangeTextInputs({
+                          size: item.value,
+                        });
+                      }}
+                    >
+                      <div className='icon-box'>
+                        <div className='icon-wrapper'>
+                          <div className='icon' style={item.iconStyle}></div>
+                        </div>
+                      </div>
+                      <div className='label'>{item.label}</div>
+                    </li>
+                  </Tooltip>
+                ))}
+              </ul>
+            </div>
+          </section>
+        </>
+      );
+    },
+  };
+
+  /* 图生视频组件 */
+  const [videoFromImageInputs, setVideoFromImageInputs] = useState({
+    model: 'wan2.1模型',
+    prompt: '',
+    img_url: '',
+    group: '',
+  });
+  /**
+   * 更改图生视频入参
+   * @param {{
+   * model: string;
+   * prompt: string;
+   * img_url: string;
+   * group: string;
+   * }} params
+   */
+  const handleChangeImageInputs = (params) => {
+    setVideoFromImageInputs({ ...videoFromImageInputs, ...params });
+  };
+
+  const ImageGenerate = {
+    aside: () => {
+      const [loading, setLoading] = useState(false);
+      const handleFileChange = async (event) => {
+        if (loading) return;
+        const input = event.target;
+        if (!input.files || input.files.length === 0) return;
+        const file = input.files[0];
+        setLoading(true);
+        try {
+          const formData = new FormData();
+          formData.append('images', file);
+          const {
+            data: { data },
+          } = await API.post('/pg/upload/image', formData);
+          handleChangeImageInputs({ img_url: data.full_url });
+        } catch (error) {}
+        setLoading(false);
+      };
+      return (
+        <>
+          <section className='sec'>
+            <div className={'title'}>
+              <span className={'txt'}>
+                <Typography.Text strong>{t('分组')}：</Typography.Text>
+              </span>
+            </div>
+            <div className={'content'}>
+              <Select
+                placeholder={t('请选择分组')}
+                name='group'
+                required
+                selection
+                onChange={(value) => {
+                  handleChangeImageInputs({
+                    group: value,
+                  });
+                }}
+                value={videoFromImageInputs.group}
+                autoComplete='new-password'
+                optionList={groups}
+                renderOptionItem={renderGroupOption}
+                style={{ width: '100%' }}
+              />
+            </div>
+          </section>
+          <section className='sec'>
+            <div className={'title'}>
+              <span className={'txt'}>
+                <Typography.Text strong>{t('模型')}：</Typography.Text>
+              </span>
+            </div>
+            <div className={'content'}>
+              <Select
+                onChange={(value) => {
+                  handleChangeImageInputs({ model: value });
+                }}
+                optionList={modelOptions}
+                value={videoFromImageInputs.model}
+              ></Select>
+            </div>
+          </section>
+          <section className='sec required upload-image'>
+            <div className={'title'}>
+              <span className={'txt'}>
+                <Typography.Text strong>{t('上传图片')}：</Typography.Text>
+              </span>
+            </div>
+            <div className={'content'}>
+              <Button className='trigger-btn' loading={loading}>
+                {t('添加图片')}
+                <input
+                  className='file-input'
+                  type='file'
+                  accept='image/jpeg, image/png, image/jpg, image/gif'
+                  onChange={handleFileChange}
+                />
+              </Button>
+              {videoFromImageInputs.img_url && (
+                <div className='preview'>
+                  <Image src={videoFromImageInputs.img_url} />
+                </div>
+              )}
+            </div>
+          </section>
+        </>
+      );
+    },
+  };
+
+  const TypeEnum = Object.freeze({
+    text: 'text',
+    image: 'image',
+  });
+
+  const ComponentTypeMap = {
+    [TypeEnum.text]: TextGenerate,
+    [TypeEnum.image]: ImageGenerate,
+  };
+
+  const typeOptions = [
+    { label: '文本', value: TypeEnum.text },
+    { label: '图片', value: TypeEnum.image },
+  ];
+
+  const [type, setType] = useState(TypeEnum.text);
+  // 最终渲染组件
+  const FinallyRenderElem = useMemo(() => {
+    return ComponentTypeMap[type];
+  });
+  // 任务处理分支
+  const startTaskHandlerMap = {
+    // 文生视频
+    [TypeEnum.text]: async () => {
+      setSubmitLoading(true);
+      try {
+        const { data } = await API.post('/pg/videos/generations', {
+          ...videoFromTextInputs,
+          prompt,
+        });
+        generateTaskStore.setVideoFromTextTaskId(data.task_id);
+      } catch (error) {
+        setSubmitLoading(false);
+      }
+    },
+    // 图生视频
+    [TypeEnum.image]: async () => {
+      if (!videoFromImageInputs.img_url) {
+        return;
+      }
+      setSubmitLoading(true);
+      try {
+        const { data } = await API.post('/pg/videos/generations', {
+          ...videoFromImageInputs,
+          prompt,
+        });
+        generateTaskStore.setVideoFromTextTaskId(data.task_id);
+        handleTastResult();
+      } catch (error) {
+        setSubmitLoading(false);
+      }
+    },
+  };
   // 开始任务
   const handleStartTask = async () => {
     if (submitLoading || !prompt) {
       return;
     }
-    setSubmitLoading(true);
-    const params = {
-      model,
-      prompt,
-      size,
-    };
-    try {
-      const res = await API.post('/pg/videos/generations', params);
-      generateTaskStore.setVideoFromTextTaskId(res.data.task_id);
-      handleTastResult();
-    } catch (error) {
-      setSubmitLoading(false);
-    }
+    startTaskHandlerMap[type]?.();
   };
 
   let taskTimer = null;
@@ -128,92 +434,72 @@ function GenerateVideo() {
         return;
       }
       if (data.task_status === 'SUCCESS') {
-        taskInfo.url = data.task_result.url;
         setSubmitLoading(false);
-        setTaskInfo({ ...taskInfo,url: data.task_result.url }); // 触发组件重渲染，更新 taskInfo.urlLis
+        setUrl(data.task_result.url);
         return;
       }
       taskTimer = setTimeout(() => {
         handleTastResult();
-      }, 2000);
+      }, 5000);
     } catch (error) {}
   };
 
+  // 初始化操作
   useEffect(() => {
-   if(generateTaskStore.videoFromTextState.task_id){
-    handleTastResult();
-   }
-   return () => {
-    if(taskTimer){
-     clearTimeout(taskTimer); // 清除定时器
-     taskTimer = null; // 将定时器变量设置为 null
-    }
-   };
-  }, []); // 只在组件挂载时执行 onc
-  // 关闭任务
-  const handleCloseTask = () => {
+    if(generateTaskStore.videoFromTextState.task_id){
+      handleTastResult();
+     }
+    loadGroups();
+  }, []);
 
-  };
+  useEffect(() => {
+    return () => {
+      if (taskTimer) {
+        clearTimeout(taskTimer); // 清除定时器
+        taskTimer = null; // 将定时器变量设置为 null
+      }
+    };
+  }, []); // 只在组件挂载时执行
+
+  const isDisabledSend = useMemo(() => {
+    if (type === TypeEnum.image) {
+      return !prompt || submitLoading || !videoFromImageInputs.img_url;
+    }
+
+    return !prompt || submitLoading;
+  },[prompt,type,videoFromImageInputs.img_url])
 
   return (
     <PageContainer>
       <aside className='aside'>
-        <section className='sec'>
-          <div className={'title'}>
-            <span className={'txt'}>Model</span>
-          </div>
-          <div className={'content'}>
-            <Select
-              onChange={setModel}
-              optionList={modelOptions}
-              value={model}
-            ></Select>
-          </div>
-        </section>
-        <section className='sec size'>
-          <div className={'title'}>
-            <span className={'txt'}>Image Size</span>
-            <Tooltip content='生成图像的长宽比。'>
-              <IconAlertCircle />
-            </Tooltip>
-          </div>
-          <div className={'content'}>
-            <ul className='tags'>
-              {sizeOptions.map((item, index) => (
-                <Tooltip key={index} content={item.tipText}>
-                  <li
-                    className={classNames({
-                      item: true,
-                      active: item.value === size,
-                    })}
-                    onClick={() => {
-                      setSize(item.value);
-                    }}
-                  >
-                    <div className='icon-box'>
-                      <div className='icon-wrapper'>
-                        <div className='icon' style={item.iconStyle}></div>
-                      </div>
-                    </div>
-                    <div className='label'>{item.label}</div>
-                  </li>
-                </Tooltip>
-              ))}
-            </ul>
-          </div>
-        </section>
-
+        <ul className='tabs'>
+          {typeOptions.map((item) => (
+            <li
+              className={classNames({
+                tab: true,
+                active: item.value === type,
+              })}
+              key={item.value}
+              onClick={() => {
+                setType(item.value);
+              }}
+            >
+              {item.label}
+            </li>
+          ))}
+        </ul>
+        <FinallyRenderElem.aside />
       </aside>
       <main className='container'>
         <div className='preview-container'>
-         { submitLoading && <div className="loading-mask">
-           <Spin size="large" />
-          </div>}
-          <div className="scroll-box">
-         
-          </div>
-          <div className="video-container">
-          {taskInfo.url && !submitLoading && <video src={taskInfo.url} controls ></video>}
+          {submitLoading && (
+            <div className='loading-mask'>
+              <Spin size='large' />
+            </div>
+          )}
+          <div className='scroll-box'></div>
+          <div className='video-container'>
+            {url && !submitLoading && <video src={url} controls></video>}
           </div>
         </div>
         <ul className='prompt-tags'>
@@ -232,7 +518,7 @@ function GenerateVideo() {
         <div className='input-area'>
           <TextArea
             showClear
-            placeholder='请输入提示词'
+            placeholder={t('请输入提示词')}
             rows={6}
             onChange={setPrompt}
             value={prompt}
@@ -240,27 +526,12 @@ function GenerateVideo() {
           <div
             className={classNames({
               btn: true,
-              disabled: !prompt || submitLoading,
+              disabled: isDisabledSend,
             })}
             onClick={handleStartTask}
           >
             <IconSend />
           </div>
-          {/* {submitLoading ? (
-            <div className='btn' onClick={handleCloseTask}>
-              <IconStop />
-            </div>
-          ) : (
-            <div
-              className={classNames({
-                btn: true,
-                disabled: !prompt || submitLoading,
-              })}
-              onClick={handleStartTask}
-            >
-              <IconSend />
-            </div>
-          )} */}
         </div>
       </main>
     </PageContainer>
