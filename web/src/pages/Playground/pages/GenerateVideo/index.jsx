@@ -13,7 +13,7 @@ import {
 } from '@douyinfe/semi-ui';
 import classNames from 'classnames';
 import { t } from 'i18next';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import  { useContext, useEffect, useMemo, useState } from 'react';
 import PageContainer from './Styled';
 import generateTaskStore from '@/store/generateTaskStore';
 
@@ -344,7 +344,7 @@ function GenerateVideo() {
                 <input
                   className='file-input'
                   type='file'
-                  accept='image/jpeg, image/png, image/jpg, image/gif'
+                  accept='image/jpeg, image/png, image/jpg'
                   onChange={handleFileChange}
                 />
               </Button>
