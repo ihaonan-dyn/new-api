@@ -77,10 +77,10 @@ func UploadImage(c *gin.Context) {
 
 	// 检查文件扩展名
 	ext := strings.ToLower(filepath.Ext(filename))
-	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".gif" {
+	if ext != ".jpg" && ext != ".jpeg" && ext != ".png" {
 		c.JSON(http.StatusUnsupportedMediaType, gin.H{
 			"error": gin.H{
-				"message": "只能上传JPG、PNG、GIF格式图片!",
+				"message": "只能上传JPG、PNG格式图片!",
 				"type":    "unsupported_type",
 			},
 		})
