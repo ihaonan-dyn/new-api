@@ -20,7 +20,7 @@ func InitMinioClient() error {
 	}
 	endpoint := os.Getenv("END_POINT")
 	accessKeyID := os.Getenv("ACCOUNT")
-	secretAccessKey := os.Getenv("PWD")
+	secretAccessKey := os.Getenv("PASSWORD")
 	useSSL := os.Getenv("USE_SSL") == "true"
 
 	minioClient, err := minio.New(endpoint, accessKeyID, secretAccessKey, useSSL)
