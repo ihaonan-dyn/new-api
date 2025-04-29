@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"html/template"
 	"io"
 	"log"
@@ -20,6 +19,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/google/uuid"
 )
@@ -202,7 +203,8 @@ func StrConvertTime0(timeStr string) (*time.Time, error) {
 }
 
 func convertTime(layout, timeStr string) (*time.Time, error) {
-	t, err := time.Parse(layout, timeStr)
+	loc, _ := time.LoadLocation("Asia/Shanghai")
+	t, err := time.ParseInLocation(layout, timeStr, loc)
 	return &t, err
 }
 

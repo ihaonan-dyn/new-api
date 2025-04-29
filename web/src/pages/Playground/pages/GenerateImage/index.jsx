@@ -13,7 +13,7 @@ import {
   Typography,
 } from '@douyinfe/semi-ui';
 import classNames from 'classnames';
-import React, { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import PageContainer from './Styled';
 import { t } from 'i18next';
 
@@ -229,7 +229,6 @@ function GenerateImage() {
         <section className='sec'>
           <div className={'title'}>
             <span className={'txt'}>
-              {' '}
               <Typography.Text strong>{t('分组')}：</Typography.Text>
             </span>
           </div>
