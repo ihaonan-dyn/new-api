@@ -3,7 +3,7 @@ import styled from 'styled-components';
 const PageContainer = styled.main`
   display: flex;
   height: calc(100vh - 60px - 48px - 20px - 2px);
-  overflow: hidden;
+  gap: 12px;
   ul {
     list-style: none;
     padding: 0;
@@ -13,7 +13,6 @@ const PageContainer = styled.main`
   .aside {
     border: 1px solid var(--semi-color-border);
     border-radius: 16px;
-    margin: 0px 8px;
     width: 320px;
     padding: 20px;
     flex-shrink: 0;

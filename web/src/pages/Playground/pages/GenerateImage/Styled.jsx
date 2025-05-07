@@ -188,12 +188,12 @@ const PageContainer = styled.main`
       flex-direction: column;
       position: relative;
       overflow: hidden;
+      justify-content: center;
 
       > .scroll-box {
-        flex: 1;
+        max-height: 100%;
         display: flex;
         flex-direction: column;
-        justify-content: center;
         gap: 12px;
         // 滚动条相关
         overflow-y: auto;
