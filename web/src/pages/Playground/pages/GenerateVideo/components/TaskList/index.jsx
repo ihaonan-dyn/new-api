@@ -49,7 +49,7 @@ const TaskListContainer = styled.div`
 `;
 
 const TaskItem = styled.div`
-  background: #fff;
+  background: var(--semi-color-bg-1);
   border-radius: 8px;
   padding: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -78,7 +78,7 @@ const TaskId = styled.span`
 `;
 
 const Prompt = styled.div`
-  color: #333;
+  color: var(--semi-color-text-0);;
   margin-bottom: 12px;
   line-height: 1.5;
 `;
