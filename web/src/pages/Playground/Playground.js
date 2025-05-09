@@ -65,7 +65,7 @@ const Playground = () => {
   ];
 
   const [inputs, setInputs] = useState({
-    model: 'QWQ-32B',
+    model: 'Qwen2.5-7B-Instruct',
     group: 'default',
     max_tokens: 0,
     temperature: 0,
@@ -79,8 +79,8 @@ const Playground = () => {
   const [message, setMessage] = useState(defaultMessage);
   const [models, setModels] = useState([
     {
-      label: 'QWQ-32B',
-      value: 'QWQ-32B',
+      label: 'Qwen2.5-7B-Instruct',
+      value: 'Qwen2.5-7B-Instruct',
     },
   ]);
   const [groups, setGroups] = useState([]);
