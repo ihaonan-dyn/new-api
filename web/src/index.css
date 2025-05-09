@@ -273,3 +273,22 @@ code {
 /*  -moz-box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08) !important;*/
 /*  min-height: 100%;*/
 /*}*/
+
+/* 滚动容器 */
+.common-scroll-container{
+  overflow: auto;
+}
+.common-scroll-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.common-scroll-container::-webkit-scrollbar-thumb{
+  background: rgba(#909399, 0.3);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.common-scroll-container::-webkit-scrollbar-track {
+  background: rgba(#909399, 0.3);
+  border-radius: 3px;
+  cursor: pointer;
+}

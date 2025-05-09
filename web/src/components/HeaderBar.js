@@ -157,7 +157,8 @@ const HeaderBar = () => {
     await API.get('/api/user/logout');
     showSuccess(t('注销成功!'));
     userDispatch({ type: 'logout' });
-    localStorage.clear();
+    // localStorage.clear();
+    localStorage.removeItem('user');
     // navigate('/login');
     window.location.reload();
   }

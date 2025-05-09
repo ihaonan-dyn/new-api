@@ -73,7 +73,7 @@ const colors = [
 ];
 
 const LogsTable = () => {
-  const { t } = useTranslation();
+  const { t,i18n } = useTranslation();
 
   function renderType(type) {
     switch (type) {
@@ -933,6 +933,10 @@ const LogsTable = () => {
     setLogs(logs);
   };
 
+  useEffect(() => {
+    setLogsFormat(logs);
+  }, [i18n.language]);
+
   const loadLogs = async (startIdx, pageSize, logType = 0) => {
     setLoading(true);
 
@@ -1056,7 +1060,6 @@ const LogsTable = () => {
                         initValue={start_timestamp}
                         type='dateTime'
                         onChange={(value) => {
-                          console.log(value);
                           handleInputChange(value, 'start_timestamp')
                         }}
                       />

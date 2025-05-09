@@ -13,9 +13,10 @@ import {
 } from '@douyinfe/semi-ui';
 import classNames from 'classnames';
 import { t } from 'i18next';
-import  { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import PageContainer from './Styled';
 import generateTaskStore from '@/store/generateTaskStore';
+import TaskList from './components/TaskList';
 
 function GenerateVideo() {
   // 提交状态
@@ -92,7 +93,6 @@ function GenerateVideo() {
     },
   ];
 
-  const [taskId, setTaskId] = useState(null);
   /* 视频url */
   const [url, setUrl] = useState('');
 
@@ -153,7 +153,7 @@ function GenerateVideo() {
   const [videoFromTextInputs, setVideoFromTextInputs] = useState({
     model: 'wan2.1模型',
     size: sizeOptions[0].value,
-    group: '',
+    group: 'default',
   });
 
   /**
@@ -255,7 +255,7 @@ function GenerateVideo() {
     model: 'wan2.1模型',
     prompt: '',
     img_url: '',
-    group: '',
+    group: 'default',
   });
   /**
    * 更改图生视频入参
@@ -371,8 +371,8 @@ function GenerateVideo() {
   };
 
   const typeOptions = [
-    { label: '文本', value: TypeEnum.text },
-    { label: '图片', value: TypeEnum.image },
+    { label: t('文本'), value: TypeEnum.text },
+    { label: t('图片'), value: TypeEnum.image },
   ];
 
   const [type, setType] = useState(TypeEnum.text);
@@ -380,6 +380,28 @@ function GenerateVideo() {
   const FinallyRenderElem = useMemo(() => {
     return ComponentTypeMap[type];
   });
+  /* 任务处理 */
+  const taskListRef = useRef(null);
+  const [taskInfo, setTaskInfo] = useState({
+    task_id: null,
+  });
+  const handleChangeTaskInfo = (params) => {
+    setTaskInfo({ ...taskInfo, ...params });
+  };
+  // 进行任务变更
+  const handleChangeTask = (item) => {
+    taskInfo.task_id = item.task_id;
+    setPrompt(item.input.prompt);
+    setSubmitLoading(false);
+    if (item.input.img_url) {
+      setType(TypeEnum.image);
+      handleChangeImageInputs(item.input);
+    } else {
+      setType(TypeEnum.text);
+      handleChangeTextInputs(item.input);
+    }
+    handleTastResult();
+  };
   // 任务处理分支
   const startTaskHandlerMap = {
     // 文生视频
@@ -390,7 +412,11 @@ function GenerateVideo() {
           ...videoFromTextInputs,
           prompt,
         });
-        generateTaskStore.setVideoFromTextTaskId(data.task_id);
+        handleChangeTaskInfo({
+          task_id: data.task_id,
+        });
+        taskListRef.current?.handleRefresh();
+        handleTastResult();
       } catch (error) {
         setSubmitLoading(false);
       }
@@ -406,7 +432,10 @@ function GenerateVideo() {
           ...videoFromImageInputs,
           prompt,
         });
-        generateTaskStore.setVideoFromTextTaskId(data.task_id);
+        handleChangeTaskInfo({
+          task_id: data.task_id,
+        });
+        taskListRef.current?.handleRefresh();
         handleTastResult();
       } catch (error) {
         setSubmitLoading(false);
@@ -418,16 +447,29 @@ function GenerateVideo() {
     if (submitLoading || !prompt) {
       return;
     }
-    startTaskHandlerMap[type]?.();
+    const callback = startTaskHandlerMap[type];
+    if (!callback) {
+      return;
+    }
+    callback();
+    taskListRef.current?.handleRefresh();
   };
 
   let taskTimer = null;
+  const handleCleartaskTimer = ()=>{
+    if(taskTimer === null){
+      return;
+    }
+
+    clearTimeout(taskTimer);
+    taskTimer = null;
+  }
   // 处理任务结果
   const handleTastResult = async () => {
     setSubmitLoading(true);
     try {
       const { data } = await API.get(
-        `/pg/videos/generations/${generateTaskStore.videoFromTextState.task_id}`,
+        `/pg/videos/generations/${taskInfo.task_id}`,
       );
       if (data.fail_reason) {
         setSubmitLoading(false);
@@ -436,8 +478,14 @@ function GenerateVideo() {
       if (data.task_status === 'SUCCESS') {
         setSubmitLoading(false);
         setUrl(data.task_result.url);
+        taskListRef.current?.handleUpdateTask((list) => {
+          const item = list.find((item) => item.task_id === taskInfo.task_id);
+          item.task_status = 'SUCCESS';
+          return list;
+        });
         return;
       }
+      handleCleartaskTimer()
       taskTimer = setTimeout(() => {
         handleTastResult();
       }, 5000);
@@ -446,28 +494,22 @@ function GenerateVideo() {
 
   // 初始化操作
   useEffect(() => {
-    if(generateTaskStore.videoFromTextState.task_id){
-      handleTastResult();
-     }
     loadGroups();
   }, []);
 
   useEffect(() => {
     return () => {
-      if (taskTimer) {
-        clearTimeout(taskTimer); // 清除定时器
-        taskTimer = null; // 将定时器变量设置为 null
-      }
+      handleCleartaskTimer();
     };
   }, []); // 只在组件挂载时执行
 
   const isDisabledSend = useMemo(() => {
     if (type === TypeEnum.image) {
-      return !prompt || submitLoading || !videoFromImageInputs.img_url;
+      return !prompt || !videoFromImageInputs.img_url;
     }
 
-    return !prompt || submitLoading;
-  },[prompt,type,videoFromImageInputs.img_url])
+    return !prompt;
+  }, [prompt, type, videoFromImageInputs.img_url]);
 
   return (
     <PageContainer>
@@ -534,6 +576,11 @@ function GenerateVideo() {
           </div>
         </div>
       </main>
+      <TaskList
+        task_id={taskInfo.task_id}
+        handleChangeTask={handleChangeTask}
+        ref={taskListRef}
+      />
     </PageContainer>
   );
 }

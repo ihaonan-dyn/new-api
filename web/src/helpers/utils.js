@@ -1,7 +1,8 @@
-import { Toast } from '@douyinfe/semi-ui';
+import { Notification, Toast } from '@douyinfe/semi-ui';
 import { toastConstants } from '../constants';
 import React from 'react';
 import { toast } from 'react-toastify';
+import { t } from 'i18next';
 
 const HTMLToastContent = ({ htmlContent }) => {
   return <div dangerouslySetInnerHTML={{ __html: htmlContent }} />;
@@ -48,6 +49,11 @@ export async function copy(text) {
   let okay = true;
   try {
     await navigator.clipboard.writeText(text);
+    Notification.info({
+      duration: 3,
+      position: 'top',
+      content: t('已复制到剪贴板！'),
+    });
   } catch (e) {
     try {
       // 构建input 执行 复制命令
@@ -57,6 +63,11 @@ export async function copy(text) {
       _input.select();
       window.document.execCommand("Copy");
       window.document.body.removeChild(_input);
+      Notification.info({
+        duration: 3,
+        position: 'top',
+        content: t('已复制到剪贴板！'),
+      });
     } catch (e) {
       okay = false;
       console.error(e);
