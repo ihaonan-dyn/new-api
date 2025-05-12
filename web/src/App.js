@@ -27,6 +27,7 @@ import OAuth2Callback from './components/OAuth2Callback.js';
 import PersonalSetting from './components/PersonalSetting.js';
 import GenerateImage from '@/pages/Playground/pages/GenerateImage/index.jsx';
 import GenerateVideo from '@/pages/Playground/pages/GenerateVideo/index.jsx';
+import ModelSquare from '@/pages/Model/ModelSquare/index.jsx';
 import zh_CN from '@douyinfe/semi-ui/lib/es/locale/source/zh_CN';
 import en_US from '@douyinfe/semi-ui/lib/es/locale/source/en_GB';
 import { LocaleProvider } from '@douyinfe/semi-ui';
@@ -114,6 +115,14 @@ function App() {
               <PrivateRoute>
                 <GenerateVideo />
               </PrivateRoute>
+            }
+          />
+        <Route
+            path='/model_square'
+            element={
+              <Suspense>
+                <ModelSquare />
+              </Suspense>
             }
           />
           <Route
