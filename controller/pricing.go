@@ -42,6 +42,15 @@ func GetPricing(c *gin.Context) {
 	})
 }
 
+func GetModelFilter(c *gin.Context) {
+	filters := model.GetModelFilters()
+
+	c.JSON(200, gin.H{
+		"success": true,
+		"data":    filters,
+	})
+}
+
 func GetModels(c *gin.Context) {
 	var req model.ModelsQueryParams
 	err := c.ShouldBind(&req)
@@ -52,7 +61,7 @@ func GetModels(c *gin.Context) {
 		return
 	}
 	// 筛选模型
-	models, err := model.GetAvailableModels(req)
+	models, err := model.GetModels(req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -79,6 +88,7 @@ func GetModels(c *gin.Context) {
 			Specification: strings.Split(m.Specification, "-"),
 			Description:   m.Description,
 			PublishTime:   m.PublishTime.Format("2006-01-02"),
+			Status:        m.Status,
 		}
 		if m.Context != 0 {
 			modelDetail.Context = fmt.Sprintf("%vK", m.Context)

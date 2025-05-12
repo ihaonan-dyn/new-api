@@ -38,6 +38,7 @@ type ModelDetail struct {
 	Specification   []string `json:"specification" gorm:"specification"` // 规格
 	Description     string   `json:"description" gorm:"description"`     // 简介
 	PublishTime     string   `json:"publish_time" gorm:"publish_time"`   // 发布日期
+	Status          int      `json:"status" gorm:"status"`               // 状态 1-可用 2-禁用
 }
 
 // ModelsQueryParams 用于包含所有搜索条件的结构体，可以根据需求添加更多字段
@@ -50,10 +51,12 @@ type ModelsQueryParams struct {
 	Context       int      `form:"context"`       // 上下文 1-≥8K 2-≥16K 3-≥32K 4-≥128K
 	Specification int      `form:"specification"` // 规格 1-MoE 2-10B以下 3-10~50B 4-50~100B 5-100B以上
 	PublishTime   int      `form:"publish_time"`  // 发布日期 1-近30天 2-近90天
+	Status        int      `form:"status"`        // 状态 1-可用 2-禁用
 }
 
-func GetAvailableModels(queryParams ModelsQueryParams) ([]*Model, error) {
-	query := DB.Table("models").Where("status=1")
+// 获取所有模型
+func GetModels(queryParams ModelsQueryParams) ([]*Model, error) {
+	query := DB.Table("models")
 
 	if queryParams.Model != "" {
 		query = query.Where("model Like ?", "%"+queryParams.Model+"%")
@@ -110,12 +113,51 @@ func GetAvailableModels(queryParams ModelsQueryParams) ([]*Model, error) {
 		query = query.Where("publish_time > CURDATE() - INTERVAL 90 DAY")
 	}
 
+	//是否可用，用于筛选pg下可用模型
+	if queryParams.Status != 0 {
+		query = query.Where("status = ?", queryParams.Status)
+	}
+
 	var models []*Model
 	// 获取数据
-	err := query.Find(&models).Error
+	err := query.Order("status").Find(&models).Error
 	if err != nil {
 		return nil, err
 	}
 
 	return models, nil
+}
+
+type (
+	ModelFilters struct {
+		Types              []string            `json:"types"`
+		Tags               []string            `json:"tags"`
+		ModelManufacturers []ModelManufacturer `json:"modelManufacturers"`
+	}
+	ModelManufacturer struct {
+		Icon         string `json:"icon" gorm:"icon"`                 // 图标地址
+		Manufacturer string `json:"manufacturer" gorm:"manufacturer"` // 系列/厂商
+	}
+)
+
+// 获取模型类型，标签，厂商
+func GetModelFilters() (modelFilters ModelFilters) {
+	DB.Table("models").Distinct("type").Pluck("type", &modelFilters.Types)
+
+	var tags []string
+	// Find distinct models
+	DB.Table("models").Distinct("tags").Pluck("tags", &tags)
+	tagMap := make(map[string]struct{}, 0)
+	for _, tag := range tags {
+		tagArr := strings.Split(tag, ",")
+		for _, s := range tagArr {
+			tagMap[s] = struct{}{}
+		}
+	}
+	for key, _ := range tagMap {
+		modelFilters.Tags = append(modelFilters.Tags, key)
+	}
+
+	DB.Table("models").Select("DISTINCT(manufacturer), icon").Find(&modelFilters.ModelManufacturers)
+	return modelFilters
 }
