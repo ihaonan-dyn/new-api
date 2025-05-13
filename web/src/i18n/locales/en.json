@@ -1495,5 +1495,7 @@
   "展开筛选器": "Expand filters",
   "隐藏筛选器": "Hide filters",
   "请输入模型名称": "Please enter model name",
-  "不可用": "Unavailable"
+  "不可用": "Unavailable",
+  "在线体验": "Online experience",
+  "API 文档": "API documentation"
 }

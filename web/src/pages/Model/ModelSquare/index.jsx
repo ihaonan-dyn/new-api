@@ -3,26 +3,27 @@ import { API } from '@/helpers';
 import { IconSearch, IconSidebar } from '@douyinfe/semi-icons';
 import { Input } from '@douyinfe/semi-ui';
 import { t } from 'i18next';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { debounce } from 'yd-web-utils'; //引入插件
 import Sidebar from './components/Slider';
 import Text from '@douyinfe/semi-ui/lib/es/typography/text';
 import { UserContext } from '@/context/User/index.js';
+import Details from './components/Details';
 const PageContainer = styled.div`
   flex: 1;
   display: flex;
   overflow: hidden;
-
   .main-content {
     flex: 1;
-    padding: 20px;
+    /* padding: 20px; */
+    margin-left: 20px;
     display: flex;
     flex-direction: column;
   }
 
   .top-tools {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     border-radius: var(--semi-border-radius-large);
     display: flex;
     gap: 12px;
@@ -54,6 +55,7 @@ const PageContainer = styled.div`
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 16px;
+    padding-top: 4px;
   }
 
   .model-card {
@@ -323,6 +325,9 @@ const ModelSquare = () => {
     handleGetList();
   }, []);
 
+  /* 获取详情页数据 */
+  const detailRef = useRef();
+
   return (
     <PageContainer>
       <Sidebar
@@ -363,7 +368,9 @@ const ModelSquare = () => {
           <LoadingContent loading={isListLoading}>
             <div className='card-grid'>
               {list.map((item, index) => (
-                <div className='model-card' key={index}>
+                <div className='model-card' key={index} onClick={()=>{
+                  detailRef.current?.handleOpen(item);
+                }}>
                   {/* <span className='new-tag'>tag占位</span> */}
                   <div className='model-header'>
                     <img
@@ -404,6 +411,7 @@ const ModelSquare = () => {
           </LoadingContent>
         </div>
       </div>
+      <Details ref={detailRef} groupRatio={groupRatio} selectedGroup={selectedGroup} />
     </PageContainer>
   );
 };
