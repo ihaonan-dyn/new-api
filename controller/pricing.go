@@ -93,8 +93,8 @@ func GetModels(c *gin.Context) {
 		if m.Context != 0 {
 			modelDetail.Context = fmt.Sprintf("%vK", m.Context)
 		}
-		//免费的模型则直接添加
-		if m.PriceType == 1 {
+		//免费/已下架的模型则直接添加
+		if m.PriceType == 1 || m.Status == 2 {
 			ModelsResp = append(ModelsResp, modelDetail)
 			continue
 		}
@@ -106,7 +106,7 @@ func GetModels(c *gin.Context) {
 				modelDetail.ModelRatio = p.ModelRatio
 				modelDetail.CompletionRatio = p.CompletionRatio
 				modelDetail.ModelPrice = p.ModelPrice
-				//找到价格的再返回，没找到则说明价格类型设置错误或者模型已下架，不返回
+				//找到价格的再返回，没找到则说明价格类型设置错误，不返回
 				ModelsResp = append(ModelsResp, modelDetail)
 				break
 			}
