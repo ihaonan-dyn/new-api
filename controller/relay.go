@@ -2,6 +2,7 @@ package controller
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -18,6 +19,7 @@ import (
 	relayconstant "one-api/relay/constant"
 	"one-api/relay/helper"
 	"one-api/service"
+	"strconv"
 	"strings"
 )
 
@@ -286,6 +288,16 @@ func shouldRetry(c *gin.Context, openaiErr *dto.OpenAIErrorWithStatusCode, retry
 	return true
 }
 
+type ChannelErr struct {
+	MsgType string `json:"msg_type"`
+	Content struct {
+		CID     string `json:"cId"`
+		CType   string `json:"cType"`
+		CName   string `json:"cName"`
+		Message string `json:"message"`
+	} `json:"content"`
+}
+
 func processChannelError(c *gin.Context, channelId int, channelType int, channelName string, autoBan bool, err *dto.OpenAIErrorWithStatusCode) {
 	// 不要使用context获取渠道信息，异步处理时可能会出现渠道信息不一致的情况
 	// do not use context to get channel info, there may be inconsistent channel info when processing asynchronously
@@ -293,6 +305,30 @@ func processChannelError(c *gin.Context, channelId int, channelType int, channel
 	if service.ShouldDisableChannel(channelType, err) && autoBan {
 		service.DisableChannel(channelId, channelName, err.Error.Message)
 	}
+
+	go func() {
+		channelErr := &ChannelErr{
+			MsgType: "text",
+			Content: struct {
+				CID     string `json:"cId"`
+				CType   string `json:"cType"`
+				CName   string `json:"cName"`
+				Message string `json:"message"`
+			}{
+				CID:     strconv.Itoa(channelId),
+				CType:   strconv.Itoa(channelType),
+				CName:   channelName,
+				Message: err.Error.Message,
+			},
+		}
+
+		//序列化channelErr
+		channelErrJson, _ := json.Marshal(channelErr)
+		err1 := SendMessage("https://www.feishu.cn/flow/api/trigger-webhook/461672a3df203f72373e1ec96cdde4c5", string(channelErrJson))
+		if err1 != nil {
+			common.LogError(c, fmt.Sprintf("send message error: %s", err1.Error()))
+		}
+	}()
 }
 
 func RelayMidjourney(c *gin.Context) {
