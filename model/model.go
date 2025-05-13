@@ -43,15 +43,15 @@ type ModelDetail struct {
 
 // ModelsQueryParams 用于包含所有搜索条件的结构体，可以根据需求添加更多字段
 type ModelsQueryParams struct {
-	Model         string   `form:"model"`         //模型关键字
-	Type          []string `form:"type"`          // 类型
-	Tags          []string `form:"tags"`          // 标签
-	Manufacturer  []string `form:"manufacturer"`  // 系列/厂商
-	PriceType     []int    `form:"price_type"`    // 价格类型 1-免费 2-计费
-	Context       int      `form:"context"`       // 上下文 1-≥8K 2-≥16K 3-≥32K 4-≥128K
-	Specification int      `form:"specification"` // 规格 1-MoE 2-10B以下 3-10~50B 4-50~100B 5-100B以上
-	PublishTime   int      `form:"publish_time"`  // 发布日期 1-近30天 2-近90天
-	Status        int      `form:"status"`        // 状态 1-可用 2-禁用
+	Model         string   `json:"model"`         //模型关键字
+	Type          []string `json:"type"`          // 类型
+	Tags          []string `json:"tags"`          // 标签
+	Manufacturer  []string `json:"manufacturer"`  // 系列/厂商
+	PriceType     []int    `json:"price_type"`    // 价格类型 1-免费 2-计费
+	Context       int      `json:"context"`       // 上下文 1-≥8K 2-≥16K 3-≥32K 4-≥128K
+	Specification int      `json:"specification"` // 规格 1-MoE 2-10B以下 3-10~50B 4-50~100B 5-100B以上
+	PublishTime   int      `json:"publish_time"`  // 发布日期 1-近30天 2-近90天
+	Status        int      `json:"status"`        // 状态 1-可用 2-禁用
 }
 
 // 获取所有模型
