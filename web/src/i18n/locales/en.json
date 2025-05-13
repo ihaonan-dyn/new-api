@@ -1472,5 +1472,11 @@
   "关于内容已更新": "About content updated",
   "关于内容更新失败": "About content update failed",
   "已是最新版本：": "Already the latest version: ",
-  "检查更新失败，请稍后再试": "Check update failed, please try again later"
+  "检查更新失败，请稍后再试": "Check update failed, please try again later",
+  "模型倍率 {{modelRatio}}，补全倍率 {{completionRatio}}，缓存倍率 {{cacheRatio}}，缓存创建倍率 {{cacheCreationRatio}}，{{ratioType}} {{ratio}}": "Model ratio {{modelRatio}}, completion ratio {{completionRatio}}, cache ratio {{cacheRatio}}, cache creation ratio {{cacheCreationRatio}}, {{ratioType}} {{ratio}}",
+  "模型倍率 {{modelRatio}}，补全倍率 {{completionRatio}}，{{ratioType}} {{ratio}}": "Model ratio {{modelRatio}}, completion ratio {{completionRatio}}, {{ratioType}} {{ratio}}",
+  "提示价格：${{price}} / 1M tokens": "Prompt price: ${{price}} / 1M tokens",
+  "补全价格：${{price}} * {{completionRatio}} = ${{total}} / 1M tokens (补全倍率: {{completionRatio}})": "Completion price: ${{price}} * {{completionRatio}} = ${{total}} / 1M tokens (completion ratio: {{completionRatio}})",
+  "补全价格：${{price}} * {{ratio}} = ${{total}} / 1M tokens": "Completion price: ${{price}} * {{ratio}} = ${{total}} / 1M tokens",
+  "模型价格 ${{price}}，{{ratioType}} {{ratio}}": "Model price ${{price}}, {{ratioType}} {{ratio}}"
 }
