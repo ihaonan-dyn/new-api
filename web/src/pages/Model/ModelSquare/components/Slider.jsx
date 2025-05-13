@@ -1,7 +1,13 @@
 import { IconChevronDown } from '@douyinfe/semi-icons';
 import classNames from 'classnames';
-import { t } from 'i18next';
-import React, { useMemo, useState } from 'react';
+// import { t,i18n } from 'i18next';
+import { API } from '@/helpers';
+import React, {
+  useEffect,
+  useMemo,
+  useState
+} from 'react';
+import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 
 // 侧边栏容器
@@ -54,7 +60,7 @@ const OptionContainer = styled.div`
 `;
 
 // 标签按钮
-const TagButton = styled.button`
+const TagButton = styled.div`
   padding: 4px 12px;
   border: 1px solid var(--semi-color-border);
   border-radius: 4px;
@@ -62,7 +68,12 @@ const TagButton = styled.button`
   cursor: pointer;
   font-size: 12px;
   background-color: var(--semi-color-bg-4);
-
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+  overflow: hidden;
   &:hover {
     border-color: var(--semi-color-primary);
     color: var(--semi-color-primary);
@@ -73,15 +84,29 @@ const TagButton = styled.button`
     border-color: var(--semi-color-primary);
     background-color: var(--semi-color-primary);
   }
+  > .prefix-icon {
+    width: 12px;
+    flex-shrink: 0;
+  }
+
+  > .txt {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
 `;
 
 /**
  * @param {{
  * isHide: boolean;
+ * handleBasicInputVal: (key: string, value: any) => void;
+ * handleArrInputVal: (key: string, value: any) => void;
+ * inputValue:{};
  * }} props
  */
 const Sidebar = (props) => {
-  const { isHide } = props;
+  const { isHide, handleBasicInputVal, handleArrInputVal, inputValue } = props;
   const [openSections, setOpenSections] = useState({
     type: true,
     tag: true,
@@ -93,6 +118,8 @@ const Sidebar = (props) => {
     releaseDate: true,
   });
 
+  const { t, i18n } = useTranslation();
+
   const toggleSection = (section) => {
     setOpenSections((prev) => ({
       ...prev,
@@ -100,82 +127,118 @@ const Sidebar = (props) => {
     }));
   };
 
-  //   临时选项
-  const TempArr = new Array(6).fill(0).map((item, index) => {
-    return {
-      value: index,
-      name: `选项${index + 1}`,
-    };
-  });
   /* 选项 */
   const [options, setOptions] = useState({
     // 类型
-    type: TempArr,
+    types: [],
     // 标签
-    tag: TempArr,
+    tags: [],
     // 系列/厂商
-    series: TempArr,
+    modelManufacturers: [],
     // 价格
-    price: TempArr,
+    price:()=> [
+      {
+        name: t('免费'),
+        value: 1,
+      },
+      {
+        name: t('计费'),
+        value: 2,
+      },
+    ],
     // 上下文
-    context: TempArr,
+    context: [
+      {
+        name: '≥8K',
+        value: 1,
+      },
+      {
+        name: '≥16K',
+        value: 2,
+      },
+      {
+        name: '≥32K',
+        value: 3,
+      },
+      {
+        name: '≥128K',
+        value: 4,
+      },
+    ],
     // 规格
-    specs: [
-      { name: 'MoE', value: 0 },
-      { name: '10B 以下', value: 1 },
-      { name: '10 ~ 50B', value: 2 },
-      { name: '50 ~ 100B', value: 3 },
-      { name: '100B 以上', value: 4 },
+    specs:()=> [
+      { name: 'MoE', value: 1 },
+      {
+        name: t('{{text}} 以下', {
+          text: '10B',
+        }),
+        value: 2,
+      },
+      { name: '10 ~ 50B', value: 3 },
+      { name: '50 ~ 100B', value: 4 },
+      {
+        name: t('{{text}} 以上', {
+          text: '100B',
+        }),
+        value: 5,
+      },
     ],
     // 发布日期
-    releaseDate: TempArr,
+    releaseDate: ()=> [
+      { name: t('近 30 天'), value: 1 },
+      { name: t('近 90 天'), value: 2 },
+    ],
   });
+  // const [isLoading, setIsLoading] = useState(false);
+  const handleGetOptions = async () => {
+    try {
+      const { data } = await API.get('/api/model_filter');
+      data.success &&
+        setOptions((pre) => ({
+          ...pre,
+          ...data.data,
+        }));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    handleGetOptions();
+  }, []);
+
   //  类型
   //   const [typeOptions, setTypeOptions] = useState(TempArr);
   const typeOptions = useMemo(() => {
-    return openSections.type ? options.type : options.type.slice(0, 2);
-  }, [options.type, openSections.type]);
+    return openSections.type ? options.types : options.types.slice(0, 2);
+  }, [options.types, openSections.type]);
   //   标签
   const tagOptions = useMemo(() => {
-    return openSections.tag ? options.tag : options.tag.slice(0, 2);
-  }, [options.tag, openSections.tag]);
+    return openSections.tag ? options.tags : options.tags.slice(0, 2);
+  }, [options.tags, openSections.tag]);
   //   系列/厂商
   const seriesOptions = useMemo(() => {
-    return openSections.series ? options.series : options.series.slice(0, 2);
-  }, [options.series, openSections.series]);
+    return openSections.series
+      ? options.modelManufacturers
+      : options.modelManufacturers.slice(0, 2);
+  }, [options.modelManufacturers, openSections.series]);
   //   价格
-  const pricesOptions = [
-    {
-      value: 0,
-      name: '只看免费',
-    },
-    {
-      value: 1,
-      name: '可用赠费',
-    },
-  ];
+  const pricesOptions = options.price();
   //   上下文
   const contextsOptions = [
-    { value: '8k', name: '≥ 8K' },
-    { value: '16k', name: '≥ 16K' },
-    { value: '32k', name: '≥ 32K' },
-    { value: '128k', name: '≥ 128K' },
+    { value: 1, name: '≥ 8K' },
+    { value: 2, name: '≥ 16K' },
+    { value: 3, name: '≥ 32K' },
+    { value: 4, name: '≥ 128K' },
   ];
   //   规格
   const specsOptions = useMemo(() => {
-    return openSections.specs ? options.specs : options.specs.slice(0, 2);
-  }, [options.specs, openSections.specs]);
+    return openSections.specs ? options.specs() : options.specs().slice(0, 2);
+  }, [options.specs,i18n.language]);
   //   发布日期
-  const releaseDateOptions = [
-    {
-      name: '近 30 天',
-      value: 0,
-    },
-    {
-      name: '近 90 天',
-      value: 1,
-    },
-  ];
+  const releaseDateOptions = options.releaseDate();
+
+
   return (
     <SidebarContainer
       className={classNames({
@@ -194,11 +257,15 @@ const Sidebar = (props) => {
           <OptionContainer>
             {typeOptions.map((item) => (
               <TagButton
-                key={item.value}
-                //   className={classNames({ active: activeModel === item.value })}
-                //   onClick={() => setActiveModel(item.value)}
+                key={item}
+                className={classNames({
+                  active: inputValue.type.includes(item),
+                })}
+                onClick={() => {
+                  handleArrInputVal('type', item);
+                }}
               >
-                {item.name}
+                <span className='txt'> {item}</span>
               </TagButton>
             ))}
           </OptionContainer>
@@ -214,11 +281,15 @@ const Sidebar = (props) => {
           <OptionContainer>
             {tagOptions.map((item) => (
               <TagButton
-                key={item.value}
-                //   className={classNames({ active: activeModel === item.value })}
-                //   onClick={() => setActiveModel(item.value)}
+                key={item}
+                className={classNames({
+                  active: inputValue.tags.includes(item),
+                })}
+                onClick={() => {
+                  handleArrInputVal('tags', item);
+                }}
               >
-                {item.name}
+                <span className='txt'>{item}</span>
               </TagButton>
             ))}
           </OptionContainer>
@@ -234,11 +305,16 @@ const Sidebar = (props) => {
           <OptionContainer>
             {seriesOptions.map((item) => (
               <TagButton
-                key={item.value}
-                //   className={classNames({ active: activeModel === item.value })}
-                //   onClick={() => setActiveModel(item.value)}
+                key={item.manufacturer}
+                className={classNames({
+                  active: inputValue.manufacturer.includes(item.manufacturer),
+                })}
+                onClick={() => {
+                  handleArrInputVal('manufacturer', item.manufacturer);
+                }}
               >
-                {item.name}
+                <img className='prefix-icon' src={item.icon} alt='' />
+                <span className='txt'>{item.manufacturer}</span>
               </TagButton>
             ))}
           </OptionContainer>
@@ -254,10 +330,14 @@ const Sidebar = (props) => {
             {pricesOptions.map((item) => (
               <TagButton
                 key={item.value}
-                //   className={classNames({ active: activeModel === item.value })}
-                //   onClick={() => setActiveModel(item.value)}
+                className={classNames({
+                  active: inputValue.price_type === item.value,
+                })}
+                onClick={() => {
+                  handleBasicInputVal('price_type', item.value);
+                }}
               >
-                {item.name}
+                <span className='txt'>{item.name}</span>
               </TagButton>
             ))}
           </OptionContainer>
@@ -273,10 +353,14 @@ const Sidebar = (props) => {
             {contextsOptions.map((item) => (
               <TagButton
                 key={item.value}
-                //   className={classNames({ active: activeModel === item.value })}
-                //   onClick={() => setActiveModel(item.value)}
+                className={classNames({
+                  active: inputValue.context === item.value,
+                })}
+                onClick={() => {
+                  handleBasicInputVal('context', item.value);
+                }}
               >
-                {item.name}
+                <span className='txt'> {item.name}</span>
               </TagButton>
             ))}
           </OptionContainer>
@@ -293,10 +377,14 @@ const Sidebar = (props) => {
             {specsOptions.map((item) => (
               <TagButton
                 key={item.value}
-                //   className={classNames({ active: activeModel === item.value })}
-                //   onClick={() => setActiveModel(item.value)}
+                className={classNames({
+                  active: inputValue.specification === item.value,
+                })}
+                onClick={() => {
+                  handleBasicInputVal('specification', item.value);
+                }}
               >
-                {item.name}
+                <span className='txt'>{item.name}</span>
               </TagButton>
             ))}
           </OptionContainer>
@@ -313,10 +401,14 @@ const Sidebar = (props) => {
             {releaseDateOptions.map((item) => (
               <TagButton
                 key={item.value}
-                //   className={classNames({ active: activeModel === item.value })}
-                //   onClick={() => setActiveModel(item.value)}
+                className={classNames({
+                  active: inputValue.publish_time === item.value,
+                })}
+                onClick={() => {
+                  handleBasicInputVal('publish_time', item.value);
+                }}
               >
-                {item.name}
+                <span className='txt'>{item.name}</span>
               </TagButton>
             ))}
           </OptionContainer>

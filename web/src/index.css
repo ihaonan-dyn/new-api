@@ -282,6 +282,9 @@ code {
   width: 6px;
   height: 6px;
 }
+.common-scroll-container.no-scrollbar::-webkit-scrollbar{
+ display: none;
+}
 .common-scroll-container::-webkit-scrollbar-thumb{
   background: rgba(#909399, 0.3);
   border-radius: 3px;

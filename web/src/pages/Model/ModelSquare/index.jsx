@@ -1,10 +1,14 @@
+import LoadingContent from '@/components/LoadingContent';
+import { API } from '@/helpers';
 import { IconSearch, IconSidebar } from '@douyinfe/semi-icons';
 import { Input } from '@douyinfe/semi-ui';
-import React, { useEffect, useRef, useState } from 'react';
-import { enableInfiniteScroll } from 'yd-web-utils'; //引入插件
-import Sidebar from './components/Slider';
-
+import { t } from 'i18next';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
+import { debounce } from 'yd-web-utils'; //引入插件
+import Sidebar from './components/Slider';
+import Text from '@douyinfe/semi-ui/lib/es/typography/text';
+import { UserContext } from '@/context/User/index.js';
 const PageContainer = styled.div`
   flex: 1;
   display: flex;
@@ -13,6 +17,8 @@ const PageContainer = styled.div`
   .main-content {
     flex: 1;
     padding: 20px;
+    display: flex;
+    flex-direction: column;
   }
 
   .top-tools {
@@ -39,9 +45,14 @@ const PageContainer = styled.div`
     width: 400px;
   }
 
+  .card-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
   .card-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 16px;
   }
 
@@ -58,11 +69,20 @@ const PageContainer = styled.div`
       box-shadow: var(--semi-shadow-elevated);
       transform: translateY(-2px);
     }
+    > .price-desc {
+      flex-shrink: 0;
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      line-height: 20px;
+      color: var(--semi-color-text-2);
+    }
   }
 
   .model-header {
     display: flex;
     align-items: center;
+    margin-bottom: 8px;
     gap: 12px;
     > .infos {
       width: calc(100% - 52px);
@@ -102,13 +122,11 @@ const PageContainer = styled.div`
       white-space: nowrap;
       word-break: break-all;
     }
-    > .price-desc {
-      flex-shrink: 0;
-    }
   }
 
   .model-description {
-    margin: 12px 0;
+    margin-top: 4px;
+    margin-bottom: 12px;
     font-size: var(--semi-font-size-small);
     color: var(--semi-color-text-0);
     display: -webkit-box;
@@ -166,71 +184,153 @@ const PageContainer = styled.div`
   }
 
   .bold-txt {
-    font-weight: var(--semi-font-weight-bold);
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--semi-color-text-0);
   }
 `;
-
-const renderPriceDesc = () => {
-  const isFree = true;
-  if (isFree) {
-    return (
-      <div className='price-desc'>
-        <span className='bold-txt'>免费</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className='price-desc'>
-      ￥<span className='bold-txt'>价格占位</span>/ M Tokens
-    </div>
-  );
-};
 
 const ModelSquare = () => {
   // ... existing code ...
   const [isHideSlider, setIsHideSlider] = useState(false);
   const [isListLoading, setIsListLoading] = useState(false);
-  const [searchParams, setSearchParams] = useState({
-    pageNum: 1,
-    pageSize: 10,
+  const [list, setList] = useState([]);
+  // 用户信息
+  const [userState, userDispatch] = useContext(UserContext);
+  const [groupRatio, setGroupRatio] = useState({});
+  const selectedGroup = useMemo(() => {
+    return userState?.user?.group || 'default';
+  }, [userState]);
+
+  const renderPriceDesc = (record) => {
+    // 不可用
+    if (record.status === 2) {
+      return (
+        <div className='price-desc'>
+          <div className='item'>{t('不可用')}</div>
+        </div>
+      );
+    }
+    const isFree = record.price_type === 1;
+    if (isFree) {
+      return (
+        <>
+          <div className='price-desc'>
+            <div className='item'>
+              <span className='bold-txt'>{t('免费')}</span>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // 按量计费
+    if (record.quota_type === 0) {
+      // 这里的 *2 是因为 1倍率=0.002刀，请勿删除
+      let inputRatioPrice = record.model_ratio * 2 * groupRatio[selectedGroup];
+      let completionRatioPrice =
+        record.model_ratio *
+        record.completion_ratio *
+        2 *
+        groupRatio[selectedGroup];
+      return (
+        <div className='price-desc'>
+          <div className='item'>
+            {t('提示')}
+            {' $ '}
+            <span className='bold-txt'>{inputRatioPrice}</span> {' / '} 1M tokens
+          </div>
+          <div className='item'>
+            {t('补全')} {' $ '}{' '}
+            <span className='bold-txt'>{completionRatioPrice} </span>
+            {' / '}
+            1M tokens
+          </div>
+        </div>
+      );
+    }
+
+    // 按次收费
+    let price = record.model_price * groupRatio[selectedGroup];
+    return (
+      <div className='price-desc'>
+        <div className='item'>
+          $ <span className='bold-txt'>{price}</span>
+          {' / '} {t('次')}
+        </div>
+      </div>
+    );
+  };
+
+  const [inputValue, setInputValue] = useState({
+    model: '',
+    type: [],
+    tags: [],
+    manufacturer: [],
+    price_type: null,
+    context: null,
+    specification: null,
+    publish_time: null,
+    status: null,
   });
-  const [list, setList] = useState([{}, {}]);
+
+  const handleInputValueChange = (field, value) => {
+    setInputValue((pre) => {
+      const newVal = {
+        ...pre,
+        [field]: value,
+      };
+      handleGetList(newVal);
+      return newVal;
+    });
+  };
+
+  // 处理基本类型的输入值
+  const handleBasicInputVal = (field, value) => {
+    inputValue[field] === value && (value = null);
+    handleInputValueChange(field, value);
+  };
+
+  // 处理数组类型的输入值
+  const handleArrInputVal = (field, value) => {
+    const preVal = inputValue[field];
+    if (!Array.isArray(preVal)) {
+      throw new Error('字段非数字');
+    }
+    let newVal = [];
+    if (preVal.includes(value)) {
+      newVal = preVal.filter((item) => item !== value);
+    } else {
+      newVal = [...preVal, value];
+    }
+    handleInputValueChange(field, newVal);
+  };
 
   // 获取列表数据
-  const handleGetList = () => {
+  const handleGetList = async (params = inputValue) => {
     setIsListLoading(true);
     try {
+      const { data } = await API.post('/api/model_list', params);
+      if (data.success) {
+        setList(data.data);
+        setGroupRatio(data.group_ratio);
+      }
     } catch (error) {}
     setIsListLoading(false);
   };
 
-  /* 触底加载 */
-  const containerRef = useRef(null);
-  let infiniteScrollClose;
-  // 是否还有任务
-  let isMore = true;
   useEffect(() => {
-    if (!containerRef.current) return;
-    infiniteScrollClose = enableInfiniteScroll(
-      {
-        container: containerRef.current,
-      },
-      () => {
-        if (isListLoading || !isMore) return;
-        console.log('触底加载');
-        searchParams.pageNum++;
-        handleGetList();
-      },
-    );
-    return () => {
-      infiniteScrollClose && infiniteScrollClose.close();
-    };
+    handleGetList();
   }, []);
 
   return (
     <PageContainer>
-      <Sidebar isHide={isHideSlider} />
+      <Sidebar
+        isHide={isHideSlider}
+        handleBasicInputVal={handleBasicInputVal}
+        handleArrInputVal={handleArrInputVal}
+        inputValue={inputValue}
+      />
       <div className='main-content'>
         <div className='top-tools'>
           <div
@@ -241,45 +341,67 @@ const ModelSquare = () => {
           >
             <IconSidebar />
             <span className='txt'>
-              {isHideSlider ? '展开筛选器' : '隐藏筛选器'}
+              {isHideSlider ? t('展开筛选器') : t('隐藏筛选器')}
             </span>
           </div>
-          <Input className='search-inp' suffix={<IconSearch />} showClear />
+          <Input
+            className='search-inp'
+            suffix={<IconSearch />}
+            placeholder={t('请输入模型名称')}
+            showClear
+            onChange={debounce(
+              (v) => {
+                handleInputValueChange('context', v.trim());
+              },
+              300,
+              false,
+            )}
+          />
         </div>
 
-        <div className='card-grid' ref={containerRef}>
-          {list.map((item, index) => (
-            <div className='model-card' key={index}>
-              <span className='new-tag'>tag占位</span>
-              <div className='model-header'>
-                <img className='model-icon' src={''} alt={''} />
-                <div className='infos'>
-                  <div className='model-title'>
-                    {
-                      '名称占位啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-                    }
+        <div className='card-container common-scroll-container no-scrollbar'>
+          <LoadingContent loading={isListLoading}>
+            <div className='card-grid'>
+              {list.map((item, index) => (
+                <div className='model-card' key={index}>
+                  {/* <span className='new-tag'>tag占位</span> */}
+                  <div className='model-header'>
+                    <img
+                      className='model-icon'
+                      src={item.icon}
+                      alt={item.model}
+                    />
+                    <div className='infos'>
+                      <div className='model-title'>{item.model}</div>
+                      <div className='model-info'>
+                        <span className='version-txt'>{item.manufacturer}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className='model-info'>
-                    <span className='version-txt'>
-                      {
-                        '版本占位啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊'
-                      }
-                    </span>
-                    <span>|</span>
-                    {renderPriceDesc()}
+                  {renderPriceDesc(item)}
+                  <p className='model-description'>{item.description}</p>
+                  <div className='tag-container'>
+                    {/* 类型 */}
+                    <div className='tag'>{item.type}</div>
+                    {/* 标签 */}
+                    {item.tags.map((tag) => (
+                      <div className='tag' key={tag}>
+                        {tag}
+                      </div>
+                    ))}
+                    {/* 规格 */}
+                    {item.specification.map((tag) => (
+                      <div className='tag' key={tag}>
+                        {tag}
+                      </div>
+                    ))}
+                    {/* 上下文 */}
+                    {item.context && <div className='tag'>{item.context}</div>}
                   </div>
                 </div>
-              </div>
-              <p className='model-description'>{'描述占位'}</p>
-              <div className='tag-container'>
-                {new Array(10).fill(1).map((tag, index) => (
-                  <div className='tag' key={index}>
-                    {'tag占位'}
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
-          ))}
+          </LoadingContent>
         </div>
       </div>
     </PageContainer>
