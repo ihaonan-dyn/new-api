@@ -78,7 +78,7 @@ const TaskId = styled.span`
 `;
 
 const Prompt = styled.div`
-  color: var(--semi-color-text-0);;
+  color: var(--semi-color-text-0);
   margin-bottom: 12px;
   line-height: 1.5;
 `;

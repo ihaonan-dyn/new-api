@@ -27,7 +27,7 @@ function GenerateImage() {
     seed: 214748364, // 种子
     size: '1024*1024', // 比例
     n: 1,
-    group: '',
+    group: 'default',
   });
   const handleInputChange = (name, value) => {
     setInputs((inputs) => ({ ...inputs, [name]: value }));

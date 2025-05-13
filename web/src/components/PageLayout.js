@@ -75,57 +75,40 @@ const PageLayout = () => {
       height: '100vh', 
       display: 'flex', 
       flexDirection: 'column',
-      overflow: styleState.isMobile ? 'visible' : 'hidden'
     }}>
       <Header style={{ 
         padding: 0, 
-        height: 'auto', 
-        lineHeight: 'normal', 
-        position: styleState.isMobile ? 'sticky' : 'fixed',
-        width: '100%', 
-        top: 0, 
-        zIndex: 100,
         boxShadow: '0 1px 6px rgba(0, 0, 0, 0.08)'
       }}>
         <HeaderBar />
       </Header>
       <Layout style={{ 
-        marginTop: styleState.isMobile ? '0' : '56px',
-        height: styleState.isMobile ? 'auto' : 'calc(100vh - 56px)',
-        overflow: styleState.isMobile ? 'visible' : 'auto',
         display: 'flex',
-        flexDirection: 'column'
+        flex: 1,
+        overflow: 'hidden'
       }}>
         {styleState.showSider && (
-          <Sider style={{
-            position: 'fixed',
-            left: 0,
-            top: '56px',
-            zIndex: 99,
-            background: 'var(--semi-color-bg-1)',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-            border: 'none',
-            paddingRight: '0',
-            height: 'calc(100vh - 56px)',
-          }}>
+          <Sider>
             <SiderBar />
           </Sider>
         )}
         <Layout style={{ 
-          marginLeft: styleState.isMobile ? '0' : (styleState.showSider ? (styleState.siderCollapsed ? '60px' : '200px') : '0'),
-          transition: 'margin-left 0.3s ease',
           flex: '1 1 auto',
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
+          overflow: 'hidden',
         }}>
           <Content
             style={{ 
-              flex: '1 0 auto',
-              overflowY: styleState.isMobile ? 'visible' : 'auto',
+              flex: '1 1 auto',
               WebkitOverflowScrolling: 'touch',
               padding: styleState.shouldInnerPadding? '24px': '0',
               position: 'relative',
               marginTop: styleState.isMobile ? '2px' : '0',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'auto'
             }}
           >
             <App />

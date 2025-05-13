@@ -399,7 +399,6 @@ const SiderBar = () => {
           background: 'var(--semi-color-bg-1)',
           borderRadius: styleState.isMobile ? '0' : '0 8px 8px 0',
           position: 'relative',
-          zIndex: 95,
           height: '100%',
           overflowY: 'auto',
           WebkitOverflowScrolling: 'touch', // Improve scrolling on iOS devices
