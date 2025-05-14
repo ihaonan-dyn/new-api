@@ -24,6 +24,7 @@ let taskTimer = null;
 function GenerateVideo() {
   const [searchParams] = useSearchParams();
   const model = searchParams.get('model');
+  const enable_group = searchParams.get('enable_group');
   // 提交状态
   const [submitLoading, setSubmitLoading] = useState(false);
   const [userState] = useContext(UserContext);
@@ -125,12 +126,26 @@ function GenerateVideo() {
     let res = await API.get(`/api/user/self/groups`);
     const { success, message, data } = res.data;
     if (success) {
-      let localGroupOptions = Object.entries(data).map(([group, info]) => ({
-        label: truncateText(info.desc, '50%'),
-        value: group,
-        ratio: info.ratio,
-        fullLabel: info.desc, // 保存完整文本用于tooltip
-      }));
+      let localGroupOptions;
+      if(!enable_group){
+        localGroupOptions = Object.entries(data).map(([group, info]) => ({
+          label: truncateText(info.desc, '50%'),
+          value: group,
+          ratio: info.ratio,
+          fullLabel: info.desc, // 保存完整文本用于tooltip
+        }));
+      }else{
+        const groupData = JSON.parse(enable_group);
+        localGroupOptions = groupData.map(group => {
+          const info = data[group];
+          return {
+            label: truncateText(info.desc, '50%'),
+            value: group,
+            ratio: info.ratio,
+            fullLabel: info.desc, // 保存完整文本用于tooltip
+          };
+        });
+      }
 
       if (localGroupOptions.length === 0) {
         localGroupOptions = [

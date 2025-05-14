@@ -283,9 +283,9 @@ const Details = forwardRef((props, ref) => {
   /* 在线体验 */
   // 体验链接映射
   const experienceLinkMap = {
-    对话: () => `/playground?model=${data.model}`,
-    生图: () => `/playground/image?model=${data.model}`,
-    视频: () => `/playground/video?model=${data.model}`,
+    对话: () => `/playground?model=${data.model}&enable_group=${JSON.stringify(data.enable_group)}`,
+    生图: () => `/playground/image?model=${data.model}&enable_group=${JSON.stringify(data.enable_group)}`,
+    视频: () => `/playground/video?model=${data.model}&enable_group=${JSON.stringify(data.enable_group)}`,
   };
   const handleOnlineExperience = () => {
     const linkGetter = experienceLinkMap[data.type];

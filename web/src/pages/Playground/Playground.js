@@ -65,7 +65,9 @@ const Playground = () => {
   ];
 
   const [searchParams, setSearchParams] = useSearchParams();
+  /* 查询字符串路径参数 */
   const model = searchParams.get('model');
+  const enable_group = searchParams.get('enable_group');
   const [inputs, setInputs] = useState({
     model: model || 'QWQ-32B',
     group: 'default',
@@ -115,6 +117,7 @@ const Playground = () => {
         setModels(data.data);
         !model && handleInputChange('model', data.data[0].model);
       }
+
     } catch (error) {}
   };
 
@@ -122,12 +125,27 @@ const Playground = () => {
     let res = await API.get(`/api/user/self/groups`);
     const { success, message, data } = res.data;
     if (success) {
-      let localGroupOptions = Object.entries(data).map(([group, info]) => ({
-        label: truncateText(info.desc, '50%'),
-        value: group,
-        ratio: info.ratio,
-        fullLabel: info.desc, // 保存完整文本用于tooltip
-      }));
+      let localGroupOptions;
+      if(!enable_group){
+        localGroupOptions = Object.entries(data).map(([group, info]) => ({
+          label: truncateText(info.desc, '50%'),
+          value: group,
+          ratio: info.ratio,
+          fullLabel: info.desc, // 保存完整文本用于tooltip
+        }));
+      }else{
+        const groupData = JSON.parse(enable_group);
+        localGroupOptions = groupData.map(group => {
+          const info = data[group];
+          return {
+            label: truncateText(info.desc, '50%'),
+            value: group,
+            ratio: info.ratio,
+            fullLabel: info.desc, // 保存完整文本用于tooltip
+          };
+        });
+      }
+  
 
       if (localGroupOptions.length === 0) {
         localGroupOptions = [
