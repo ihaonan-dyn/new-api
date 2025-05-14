@@ -24,7 +24,6 @@ let taskTimer = null;
 function GenerateVideo() {
   const [searchParams] = useSearchParams();
   const model = searchParams.get('model');
-  const enable_group = searchParams.get('enable_group');
   // 提交状态
   const [submitLoading, setSubmitLoading] = useState(false);
   const [userState] = useContext(UserContext);
@@ -32,6 +31,7 @@ function GenerateVideo() {
   const [modelOptions, setModelOptions] = useState([
     {
       model: 'wan2.1模型',
+      enable_group: ['default'],
     },
   ]);
 
@@ -41,14 +41,22 @@ function GenerateVideo() {
       status: 1,
     };
     try {
-      const { data } = await API.post('/api/model_list', params);
-      if (data.success && data.data.length) {
-        const newData = data.data;
-        setModelOptions(newData);
+      const {
+        data: { data, success },
+      } = await API.post('/api/model_list', params);
+      if (success && data.length) {
+        setModelOptions(data);
+        const { enable_group } = data[0];
+        setEnable_group(enable_group);
         if (!model) {
-          const newModel = newData[0].model;
-          handleChangeImageInputs({ model: newModel });
-          handleChangeTextInputs({ model: newModel });
+          handleChangeImageInputs({ model: data[0].model });
+          handleChangeTextInputs({ model: data[0].model });
+        }
+
+        // 回显分组
+        if (enable_group?.lengt) {
+          handleChangeImageInputs({ group: enable_group[0] });
+          handleChangeTextInputs({ group: enable_group[0] });
         }
       }
     } catch (error) {}
@@ -121,67 +129,36 @@ function GenerateVideo() {
   const [url, setUrl] = useState('');
 
   /* 分组 */
-  const [groups, setGroups] = useState([]);
+  const [enable_group, setEnable_group] = useState(() => {
+    const params = searchParams.get('enable_group');
+    const result = params ? JSON.parse(params) : [];
+    if (!Array.isArray(result)) {
+      throw new Error('enable_group is not a valid array');
+    }
+    return result;
+  });
+  const [groupDict, setGroupDict] = useState(null);
+
+  const groupsOptions = useMemo(() => {
+    if (!groupDict || !enable_group?.length) {
+      return [];
+    }
+    return enable_group.map((group) => {
+      const info = groupDict[group];
+      return {
+        label: truncateText(info.desc, '50%'),
+        value: group,
+        ratio: info.ratio,
+        fullLabel: info.desc, // 保存完整文本用于tooltip
+      };
+    });
+  }, [groupDict, enable_group]);
+
   const loadGroups = async () => {
     let res = await API.get(`/api/user/self/groups`);
     const { success, message, data } = res.data;
     if (success) {
-      let localGroupOptions;
-      if(!enable_group){
-        localGroupOptions = Object.entries(data).map(([group, info]) => ({
-          label: truncateText(info.desc, '50%'),
-          value: group,
-          ratio: info.ratio,
-          fullLabel: info.desc, // 保存完整文本用于tooltip
-        }));
-      }else{
-        const groupData = JSON.parse(enable_group);
-        localGroupOptions = groupData.map(group => {
-          const info = data[group];
-          return {
-            label: truncateText(info.desc, '50%'),
-            value: group,
-            ratio: info.ratio,
-            fullLabel: info.desc, // 保存完整文本用于tooltip
-          };
-        });
-      }
-
-      if (localGroupOptions.length === 0) {
-        localGroupOptions = [
-          {
-            label: t('用户分组'),
-            value: '',
-            ratio: 1,
-          },
-        ];
-      } else {
-        const localUser = JSON.parse(localStorage.getItem('user'));
-        const userGroup =
-          (userState.user && userState.user.group) ||
-          (localUser && localUser.group);
-
-        if (userGroup) {
-          const userGroupIndex = localGroupOptions.findIndex(
-            (g) => g.value === userGroup,
-          );
-          if (userGroupIndex > -1) {
-            const userGroupOption = localGroupOptions.splice(
-              userGroupIndex,
-              1,
-            )[0];
-            localGroupOptions.unshift(userGroupOption);
-          }
-        }
-      }
-
-      setGroups(localGroupOptions);
-      handleChangeTextInputs({
-        group: localGroupOptions[0]?.value || '',
-      });
-      handleChangeImageInputs({
-        group: localGroupOptions[0]?.value || '',
-      });
+      setGroupDict(data);
     } else {
       showError(t(message));
     }
@@ -225,7 +202,7 @@ function GenerateVideo() {
                 }}
                 value={videoFromTextInputs.group}
                 autoComplete='new-password'
-                optionList={groups}
+                optionList={groupsOptions}
                 renderOptionItem={renderGroupOption}
                 style={{ width: '100%' }}
               />
@@ -240,12 +217,16 @@ function GenerateVideo() {
             <div className={'content'}>
               <Select
                 onChange={(value) => {
-                  handleChangeTextInputs({ model: value });
+                  handleChangeTextInputs({
+                    model: value.model,
+                    group: value.enable_group[0],
+                  });
+                  setEnable_group(value.enable_group);
                 }}
                 value={videoFromTextInputs.model}
               >
                 {modelOptions.map((item) => (
-                  <Select.Option key={item.model} value={item.model}>
+                  <Select.Option key={item.model} value={item}>
                     {item.model}
                   </Select.Option>
                 ))}
@@ -353,7 +334,7 @@ function GenerateVideo() {
                 }}
                 value={videoFromImageInputs.group}
                 autoComplete='new-password'
-                optionList={groups}
+                optionList={groupsOptions}
                 renderOptionItem={renderGroupOption}
                 style={{ width: '100%' }}
               />
@@ -368,7 +349,11 @@ function GenerateVideo() {
             <div className={'content'}>
               <Select
                 onChange={(value) => {
-                  handleChangeImageInputs({ model: value });
+                  handleChangeImageInputs({
+                    model: value.model,
+                    group: value.enable_group[0],
+                  });
+                  setEnable_group(value.enable_group);
                 }}
                 value={videoFromImageInputs.model}
               >
@@ -463,7 +448,7 @@ function GenerateVideo() {
         handleChangeTaskInfo({
           task_id: data.task_id,
         });
-        
+
         taskListRef.current?.handleRefresh();
         handleTastResult();
       } catch (error) {
@@ -505,7 +490,6 @@ function GenerateVideo() {
     taskListRef.current?.handleRefresh();
   };
 
-
   const handleCleartaskTimer = () => {
     if (taskTimer === null) {
       return;
@@ -534,7 +518,7 @@ function GenerateVideo() {
           item.task_status = 'SUCCESS';
           return list;
         });
-        
+
         return;
       }
       handleCleartaskTimer();
@@ -556,7 +540,6 @@ function GenerateVideo() {
   useEffect(() => {
     return () => {
       handleCleartaskTimer();
-      
     };
   }, []); // 只在组件挂载时执行
 
@@ -592,11 +575,10 @@ function GenerateVideo() {
       <main className='container'>
         <div className='preview-container'>
           <LoadingContent loading={submitLoading}>
-          <div className='video-container'>
-            {url && <video src={url} controls></video>}
-          </div>
+            <div className='video-container'>
+              {url && <video src={url} controls></video>}
+            </div>
           </LoadingContent>
-       
         </div>
         <ul className='prompt-tags'>
           {promptTags.map((item, index) => (
