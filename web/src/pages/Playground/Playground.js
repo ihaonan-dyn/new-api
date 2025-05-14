@@ -74,7 +74,7 @@ const Playground = () => {
   /* 查询字符串路径参数 */
   const model = searchParams.get('model');
   const [inputs, setInputs] = useState({
-    model: model || 'QWQ-32B',
+    model: model || 'Qwen2.5-7B-Instruct',
     group: 'default',
     max_tokens: 0,
     temperature: 0,
@@ -87,7 +87,10 @@ const Playground = () => {
   const [message, setMessage] = useState(defaultMessage);
   const [models, setModels] = useState([
     {
-      model: 'QWQ-32B',
+      model: 'Qwen2.5-7B-Instruct',
+      enable_group: [
+        'default',
+      ]
     },
   ]);
   const [showSettings, setShowSettings] = useState(true);
