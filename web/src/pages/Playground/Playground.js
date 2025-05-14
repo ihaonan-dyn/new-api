@@ -64,13 +64,14 @@ const Playground = () => {
     },
   ];
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const model = searchParams.get('model');
   const [inputs, setInputs] = useState({
-    model: 'QWQ-32B',
+    model: model || 'QWQ-32B',
     group: 'default',
     max_tokens: 0,
     temperature: 0,
   });
-  const [searchParams, setSearchParams] = useSearchParams();
   const [userState, userDispatch] = useContext(UserContext);
   const [status, setStatus] = useState({});
   const [systemPrompt, setSystemPrompt] = useState(
@@ -79,8 +80,7 @@ const Playground = () => {
   const [message, setMessage] = useState(defaultMessage);
   const [models, setModels] = useState([
     {
-      label: 'QWQ-32B',
-      value: 'QWQ-32B',
+      model: 'QWQ-32B',
     },
   ]);
   const [groups, setGroups] = useState([]);
@@ -100,23 +100,22 @@ const Playground = () => {
       status = JSON.parse(status);
       setStatus(status);
     }
-    // loadModels();
+    handleGetModelOptions();
     loadGroups();
   }, []);
 
-  const loadModels = async () => {
-    let res = await API.get(`/api/user/models`);
-    const { success, message, data } = res.data;
-    if (success) {
-      let localModelOptions = data.map((model) => ({
-        label: model,
-        value: model,
-      }));
-      setModels(localModelOptions);
-      handleInputChange('model', localModelOptions[0].value || '');
-    } else {
-      showError(t(message));
-    }
+  const handleGetModelOptions = async () => {
+    const params = {
+      type: ['对话'],
+      status: 1,
+    };
+    try {
+      const { data } = await API.post('/api/model_list', params);
+      if (data.success && data.data.length) {
+        setModels(data.data);
+        !model && handleInputChange('model', data.data[0].model);
+      }
+    } catch (error) {}
   };
 
   const loadGroups = async () => {
@@ -398,8 +397,13 @@ const Playground = () => {
               }}
               value={inputs.model}
               autoComplete='new-password'
-              optionList={models}
-            />
+            >
+              {models.map((item) => (
+                <Select.Option key={item.model} value={item.model}>
+                  {item.model}
+                </Select.Option>
+              ))}
+            </Select>
             <div style={{ marginTop: 10 }}>
               <Typography.Text strong>Temperature：</Typography.Text>
             </div>

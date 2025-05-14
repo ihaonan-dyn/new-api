@@ -163,8 +163,6 @@ const renderStatus = (type) => {
   }
 };
 
-let isFirst = true;
-
 /**
  * @param {
  * {
@@ -174,6 +172,7 @@ let isFirst = true;
  * } params
  */
 const TaskList = forwardRef((params, ref) => {
+  const isFirst = useRef(true);
   const [state, setState] = useState({});
   const handleUpdate = () => {
     setState({});
@@ -202,8 +201,8 @@ const TaskList = forwardRef((params, ref) => {
         });
       }
       // 初始化赋值
-      if(isFirst){
-        isFirst = false;
+      if(isFirst.current){
+        isFirst.current = false;
         handleChangeTask(data[0]);
         !params.task_id && data.length > 0 && handleChangeTask(data[0]);
       }

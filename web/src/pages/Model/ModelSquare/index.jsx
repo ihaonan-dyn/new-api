@@ -204,8 +204,8 @@ const PageContainer = styled.div`
   }
 `;
 
-let isFirst = true;
 const ModelSquare = () => {
+  const isFirst = useRef(true);
   const [searchParams] = useSearchParams();
   const [isHideSlider, setIsHideSlider] = useState(false);
   const [isListLoading, setIsListLoading] = useState(false);
@@ -332,13 +332,13 @@ const ModelSquare = () => {
         setList(newList);
         setGroupRatio(data.group_ratio);
         // 在有查询字符串的情况下进行回显
-        if (isFirst) {
+        if (isFirst.current) {
           const model = searchParams.get('model');
           if (model) {
             const item = newList.find((item) => item.model === model);
             item && detailRef.current?.handleOpen(item);
           }
-          isFirst = false;
+          isFirst.current = false;
         }
       }
     } catch (error) {}

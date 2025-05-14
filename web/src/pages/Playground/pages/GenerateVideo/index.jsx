@@ -36,7 +36,7 @@ function GenerateVideo() {
 
   const handleGetModelOptions = async () => {
     const params = {
-      type: ['生图'],
+      type: ['视频'],
       status: 1,
     };
     try {
@@ -541,6 +541,7 @@ function GenerateVideo() {
   useEffect(() => {
     return () => {
       handleCleartaskTimer();
+      
     };
   }, []); // 只在组件挂载时执行
 
