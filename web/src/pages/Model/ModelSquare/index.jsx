@@ -11,6 +11,7 @@ import Text from '@douyinfe/semi-ui/lib/es/typography/text';
 import { UserContext } from '@/context/User/index.js';
 import Details from './components/Details';
 import classNames from 'classnames';
+import { useSearchParams } from 'react-router-dom';
 const PageContainer = styled.div`
   flex: 1;
   display: flex;
@@ -75,8 +76,8 @@ const PageContainer = styled.div`
       }
     }
 
-    &.disabled{
-      .model-title{
+    &.disabled {
+      .model-title {
         text-decoration: line-through;
       }
       background-color: var(--semi-color-fill-0);
@@ -203,8 +204,9 @@ const PageContainer = styled.div`
   }
 `;
 
+let isFirst = true;
 const ModelSquare = () => {
-  // ... existing code ...
+  const [searchParams] = useSearchParams();
   const [isHideSlider, setIsHideSlider] = useState(false);
   const [isListLoading, setIsListLoading] = useState(false);
   const [list, setList] = useState([]);
@@ -326,8 +328,18 @@ const ModelSquare = () => {
     try {
       const { data } = await API.post('/api/model_list', params);
       if (data.success) {
-        setList(data.data);
+        const newList = data.data;
+        setList(newList);
         setGroupRatio(data.group_ratio);
+        // 在有查询字符串的情况下进行回显
+        if (isFirst) {
+          const model = searchParams.get('model');
+          if (model) {
+            const item = newList.find((item) => item.model === model);
+            item && detailRef.current?.handleOpen(item);
+          }
+          isFirst = false;
+        }
       }
     } catch (error) {}
     setIsListLoading(false);

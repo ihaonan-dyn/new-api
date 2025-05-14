@@ -163,6 +163,8 @@ const renderStatus = (type) => {
   }
 };
 
+let isFirst = true;
+
 /**
  * @param {
  * {
@@ -199,8 +201,11 @@ const TaskList = forwardRef((params, ref) => {
           return pre.concat(data);
         });
       }
-      if (!params.task_id && data.length > 0) {
+      // 初始化赋值
+      if(isFirst){
+        isFirst = false;
         handleChangeTask(data[0]);
+        !params.task_id && data.length > 0 && handleChangeTask(data[0]);
       }
     } catch (error) {}
     isLoading.current = false;

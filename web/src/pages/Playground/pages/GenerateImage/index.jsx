@@ -19,7 +19,15 @@ import { t } from 'i18next';
 import { useSearchParams } from 'react-router-dom';
 import LoadingContent from '@/components/LoadingContent';
 
+let taskTimer = null;
 function GenerateImage() {
+  const handleCleartaskTimer = () => {
+    if (taskTimer === null) {
+      return;
+    }
+    clearTimeout(taskTimer);
+    taskTimer = null;
+  };
   const [userState, userDispatch] = useContext(UserContext);
   const [searchParams] = useSearchParams();
   // 提交状态
@@ -197,7 +205,7 @@ function GenerateImage() {
       setSubmitLoading(false);
     }
   };
-  let taskTimer = null;
+
   // 处理任务结果
   const handleTastResult = async () => {
     setSubmitLoading(true);
@@ -212,8 +220,10 @@ function GenerateImage() {
       if (data.task_status === 'SUCCESS') {
         setSubmitLoading(false);
         setUrl(data.task_result.url); // 触发组件重渲染，更新 taskInfo.urlLis
+        handleCleartaskTimer();
         return;
       }
+      handleCleartaskTimer();
       taskTimer = setTimeout(() => {
         handleTastResult();
       }, 5000);
@@ -225,10 +235,7 @@ function GenerateImage() {
       handleTastResult();
     }
     return () => {
-      if (taskTimer) {
-        clearTimeout(taskTimer); // 清除定时器
-        taskTimer = null; // 将定时器变量设置为 null
-      }
+      handleCleartaskTimer();
     };
   }, []); // 添加依赖项，确保在 task_id 变化时重新执行 handleTastResult
 
