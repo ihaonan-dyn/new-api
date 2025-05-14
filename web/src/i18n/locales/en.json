@@ -1497,5 +1497,10 @@
   "请输入模型名称": "Please enter model name",
   "不可用": "Unavailable",
   "在线体验": "Online experience",
-  "API 文档": "API documentation"
+  "API 文档": "API documentation",
+  "该模型暂不可用": "This model is temporarily unavailable",
+  "链接已复制！": "Link copied!",
+  "对话": "Chat",
+  "生图": "Image",
+  "视频": "Video"
 }

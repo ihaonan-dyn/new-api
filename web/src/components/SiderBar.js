@@ -94,7 +94,7 @@ const routerMap = {
   personal: '/personal',
   playground_image: '/playground/image',
   playground_video: '/playground/video',
-  playground_textChat: 'playground',
+  playground_textChat: '/playground',
   // 模型
   model_square: '/model_square',
 };

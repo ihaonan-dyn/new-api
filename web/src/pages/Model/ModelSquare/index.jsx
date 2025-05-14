@@ -10,6 +10,7 @@ import Sidebar from './components/Slider';
 import Text from '@douyinfe/semi-ui/lib/es/typography/text';
 import { UserContext } from '@/context/User/index.js';
 import Details from './components/Details';
+import classNames from 'classnames';
 const PageContainer = styled.div`
   flex: 1;
   display: flex;
@@ -67,10 +68,20 @@ const PageContainer = styled.div`
     position: relative;
     cursor: pointer;
 
-    &:hover {
-      box-shadow: var(--semi-shadow-elevated);
-      transform: translateY(-2px);
+    &:not(.disabled) {
+      &:hover {
+        box-shadow: var(--semi-shadow-elevated);
+        transform: translateY(-2px);
+      }
     }
+
+    &.disabled{
+      .model-title{
+        text-decoration: line-through;
+      }
+      background-color: var(--semi-color-fill-0);
+    }
+
     > .price-desc {
       flex-shrink: 0;
       display: flex;
@@ -240,7 +251,8 @@ const ModelSquare = () => {
           <div className='item'>
             {t('提示')}
             {' $ '}
-            <span className='bold-txt'>{inputRatioPrice}</span> {' / '} 1M tokens
+            <span className='bold-txt'>{inputRatioPrice}</span> {' / '} 1M
+            tokens
           </div>
           <div className='item'>
             {t('补全')} {' $ '}{' '}
@@ -368,9 +380,16 @@ const ModelSquare = () => {
           <LoadingContent loading={isListLoading}>
             <div className='card-grid'>
               {list.map((item, index) => (
-                <div className='model-card' key={index} onClick={()=>{
-                  detailRef.current?.handleOpen(item);
-                }}>
+                <div
+                  className={classNames({
+                    'model-card': true,
+                    disabled: item.status === 2,
+                  })}
+                  key={index}
+                  onClick={() => {
+                    detailRef.current?.handleOpen(item);
+                  }}
+                >
                   {/* <span className='new-tag'>tag占位</span> */}
                   <div className='model-header'>
                     <img
@@ -411,7 +430,11 @@ const ModelSquare = () => {
           </LoadingContent>
         </div>
       </div>
-      <Details ref={detailRef} groupRatio={groupRatio} selectedGroup={selectedGroup} />
+      <Details
+        ref={detailRef}
+        groupRatio={groupRatio}
+        selectedGroup={selectedGroup}
+      />
     </PageContainer>
   );
 };

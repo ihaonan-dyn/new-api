@@ -45,14 +45,14 @@ export function getFooterHTML() {
   return localStorage.getItem('footer_html');
 }
 
-export async function copy(text) {
+export async function copy(text,tipText = '已复制到剪贴板！') {
   let okay = true;
   try {
     await navigator.clipboard.writeText(text);
     Notification.info({
       duration: 3,
       position: 'top',
-      content: t('已复制到剪贴板！'),
+      content: t(tipText),
     });
   } catch (e) {
     try {
@@ -66,7 +66,7 @@ export async function copy(text) {
       Notification.info({
         duration: 3,
         position: 'top',
-        content: t('已复制到剪贴板！'),
+        content: t(tipText),
       });
     } catch (e) {
       okay = false;

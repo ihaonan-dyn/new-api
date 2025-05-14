@@ -1,10 +1,11 @@
-import React, { forwardRef, useImperativeHandle, useState } from 'react';
-import { SideSheet, Button } from '@douyinfe/semi-ui';
-import styled from 'styled-components';
-import { IconCopy } from '@douyinfe/semi-icons';
 import { copy } from '@/helpers';
-import { t } from 'i18next';
+import { IconCopy, IconSourceControl } from '@douyinfe/semi-icons';
+import { Button, SideSheet, Tooltip } from '@douyinfe/semi-ui';
 import classNames from 'classnames';
+import { t } from 'i18next';
+import React, { forwardRef, useImperativeHandle, useState } from 'react';
+import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 
 const DetailsContainer = styled.div`
   height: 100%;
@@ -35,11 +36,20 @@ const DetailsContainer = styled.div`
     color: var(--semi-color-text-0);
     margin: 0;
     display: flex;
-    align-items: center;
+    /* align-items: center; */
     gap: 8px;
+    .txt {
+      overflow: hidden;
+      word-break: break-all;
+      &.disabled {
+        text-decoration: line-through;
+      }
+    }
 
-    .copy-btn {
+    .semi-icon {
       color: var(--semi-color-text-2);
+      font-size: 16px;
+      flex-shrink: 0;
       cursor: pointer;
       &:hover {
         color: var(--semi-color-primary);
@@ -100,6 +110,16 @@ const DetailsContainer = styled.div`
     padding: 4px 8px;
     border-radius: var(--semi-border-radius-small);
     font-size: var(--semi-font-size-small);
+  }
+
+  /* 禁用提示 */
+  .disabled-tip {
+    padding: 16px 24px;
+    color: var(--semi-color-danger);
+    font-size: 14px;
+    background-color: var(--semi-color-danger-light-default);
+    margin-bottom: 16px;
+    border-radius: 8px;
   }
 
   .content {
@@ -170,6 +190,7 @@ const DetailsContainer = styled.div`
 const Details = forwardRef((props, ref) => {
   const { groupRatio, selectedGroup } = props;
   const [data, setData] = useState({});
+  const navigate = useNavigate();
 
   const renderPriceDesc = () => {
     // 不可用
@@ -236,6 +257,11 @@ const Details = forwardRef((props, ref) => {
     copy(data.model);
   };
 
+  const handleCopyShareLink = () => {
+    const url = `${window.location.origin}${window.location.pathname}?model=${data.model}`;
+    copy(url, '链接已复制！');
+  };
+
   const [isVisible, setVisible] = useState(false);
   const handleClose = () => {
     setVisible(false);
@@ -252,6 +278,29 @@ const Details = forwardRef((props, ref) => {
   // 是否收起
   const [isPackUp, setIsPackUp] = useState(true);
 
+  /* 在线体验 */
+  // 体验链接映射
+  const experienceLinkMap = {
+    对话: () => `/playground?model=${data.model}`,
+    生图: () => `/playground/image?model=${data.model}`,
+    视频: () => `/playground/video?model=${data.model}`,
+  };
+  const handleOnlineExperience = () => {
+    const linkGetter = experienceLinkMap[data.type];
+    linkGetter && navigate(linkGetter());
+  };
+
+  // 跳转到API文档
+  const apiLinkMap = {
+    对话: () => `https://liandanxia-api.apifox.cn/290396775e0`,
+    生图: () => `https://liandanxia-api.apifox.cn/290396780e0`,
+    视频: () => `https://liandanxia-api.apifox.cn/290396776e0`,
+  };
+  const handleGoApiDoc = () => {
+    const linkGetter = apiLinkMap[data.type];
+    linkGetter && window.open(linkGetter());
+  };
+
   return (
     <SideSheet
       title={null}
@@ -266,8 +315,27 @@ const Details = forwardRef((props, ref) => {
           <img className='model-icon' src={data.icon} alt={data.model} />
           <div className='info'>
             <h3 className='title'>
-              {data.model}
-              <IconCopy className='copy-btn' onClick={handleCopy} />
+              <span
+                className={classNames({
+                  txt: true,
+                  disabled: data.status === 2,
+                })}
+              >
+                {data.model}
+              </span>
+              {data.status !== 2 && (
+                <>
+                  <Tooltip content={t('复制')} position='top'>
+                    <IconCopy className='copy-btn' onClick={handleCopy} />
+                  </Tooltip>
+                  <Tooltip content={t('分享')} position='top'>
+                    <IconSourceControl
+                      className='icon'
+                      onClick={handleCopyShareLink}
+                    />
+                  </Tooltip>
+                </>
+              )}
             </h3>
             <div className='manufacturer'>{data.manufacturer}</div>
             <div className='desc'>
@@ -310,12 +378,17 @@ const Details = forwardRef((props, ref) => {
           </div>
         </div>
 
+        {data.status == 2 && (
+          <div className='disabled-tip'>{t('该模型暂不可用')}</div>
+        )}
         <div className='content'>
           <div className='model-info'>
-            <div className='info-item'>
-              <div className='label'>{t('价格')}</div>
-              <div className='value'>{renderPriceDesc()}</div>
-            </div>
+            {data.status !== 2 && (
+              <div className='info-item'>
+                <div className='label'>{t('价格')}</div>
+                <div className='value'>{renderPriceDesc()}</div>
+              </div>
+            )}
             <div className='info-item'>
               <div className='label'>{t('上下文')}</div>
               <div className='value'>128K</div>
@@ -327,14 +400,26 @@ const Details = forwardRef((props, ref) => {
           </div>
         </div>
 
-        <div className='action-btns'>
-          <Button type='primary' theme='solid' size='large'>
-            {t('在线体验')}
-          </Button>
-          <Button type='primary' theme='light' size='large'>
-            {t('API 文档')}
-          </Button>
-        </div>
+        {data.status !== 2 && (
+          <div className='action-btns'>
+            <Button
+              type='primary'
+              theme='solid'
+              size='large'
+              onClick={handleOnlineExperience}
+            >
+              {t('在线体验')}
+            </Button>
+            <Button
+              type='primary'
+              theme='light'
+              size='large'
+              onClick={handleGoApiDoc}
+            >
+              {t('API 文档')}
+            </Button>
+          </div>
+        )}
       </DetailsContainer>
     </SideSheet>
   );

@@ -16,13 +16,16 @@ import classNames from 'classnames';
 import { useContext, useEffect, useState } from 'react';
 import PageContainer from './Styled';
 import { t } from 'i18next';
+import { useSearchParams } from 'react-router-dom';
+import LoadingContent from '@/components/LoadingContent';
 
 function GenerateImage() {
   const [userState, userDispatch] = useContext(UserContext);
+  const [searchParams] = useSearchParams();
   // 提交状态
   const [submitLoading, setSubmitLoading] = useState(false);
   const [inputs, setInputs] = useState({
-    model: 'wanx2.1-t2i-turbo', // 模型
+    model: searchParams.get('model') || 'wanx2.1-t2i-turbo', // 模型
     prompt: '', // 提示词
     seed: 214748364, // 种子
     size: '1024*1024', // 比例
@@ -33,12 +36,26 @@ function GenerateImage() {
     setInputs((inputs) => ({ ...inputs, [name]: value }));
   };
   /* 模型 */
-  const modelOptions = [
+  const [modelOptions, setModelOptions] = useState([
     {
-      label: 'wanx2.1-t2i-turbo',
-      value: 'wanx2.1-t2i-turbo',
+      model: 'wanx2.1-t2i-turbo',
     },
-  ];
+  ]);
+
+  const handleGetModelOptions = async () => {
+    const params = {
+      type: ['生图'],
+      status: 1,
+    };
+    try {
+      const { data } = await API.post('/api/model_list', params);
+      if (data.success && data.data.length) {
+        setModelOptions(data.data);
+        const model = searchParams.get('model');
+        !model && handleInputChange('model', data.data[0].model);
+      }
+    } catch (error) {}
+  };
 
   /* 比例 */
   const sizeOptions = [
@@ -218,6 +235,7 @@ function GenerateImage() {
   // 初始化操作
   useEffect(() => {
     loadGroups();
+    handleGetModelOptions();
   }, []);
 
   // 关闭任务
@@ -260,9 +278,14 @@ function GenerateImage() {
               onChange={(value) => {
                 handleInputChange('model', value);
               }}
-              optionList={modelOptions}
               value={inputs.model}
-            ></Select>
+            >
+              {modelOptions.map((item, index) => (
+                <Select.Option key={index} value={item.model}>
+                  {item.model}
+                </Select.Option>
+              ))}
+            </Select>
           </div>
         </section>
         <section className='sec size'>
@@ -358,18 +381,15 @@ function GenerateImage() {
       </aside>
       <main className='container'>
         <div className='preview-container'>
-          {submitLoading && (
-            <div className='loading-mask'>
-              <Spin size='large' />
+          <LoadingContent loading={submitLoading}>
+            <div className='scroll-box'>
+              {url.map((item) => (
+                <div className='item' key={item}>
+                  <img src={item} alt='' />
+                </div>
+              ))}
             </div>
-          )}
-          <div className='scroll-box'>
-            {url.map((item) => (
-              <div className='item' key={item}>
-                <img src={item} alt='' />
-              </div>
-            ))}
-          </div>
+          </LoadingContent>
         </div>
         <ul className='prompt-tags'>
           {promptTags.map((item, index) => (
