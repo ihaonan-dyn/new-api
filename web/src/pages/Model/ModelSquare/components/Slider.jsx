@@ -331,10 +331,10 @@ const Sidebar = (props) => {
               <TagButton
                 key={item.value}
                 className={classNames({
-                  active: inputValue.price_type === item.value,
+                  active: inputValue.price_type.includes(item.value) ,
                 })}
                 onClick={() => {
-                  handleBasicInputVal('price_type', item.value);
+                  handleArrInputVal('price_type', item.value);
                 }}
               >
                 <span className='txt'>{item.name}</span>

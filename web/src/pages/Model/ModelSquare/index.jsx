@@ -253,26 +253,30 @@ const ModelSquare = () => {
           <div className='item'>
             {t('提示')}
             {' $ '}
-            <span className='bold-txt'>{inputRatioPrice}</span> {' / '} 1M
-            tokens
+            <span className='bold-txt'>{inputRatioPrice}</span> {' /  M tokens'}
+            
           </div>
           <div className='item'>
             {t('补全')} {' $ '}{' '}
             <span className='bold-txt'>{completionRatioPrice} </span>
-            {' / '}
-            1M tokens
+            {' / M tokens'}
+            
           </div>
         </div>
       );
     }
 
+    const mapUnit = {
+      '生图': ' / Image',
+      '视频': ' / Video',
+    };
     // 按次收费
     let price = record.model_price * groupRatio[selectedGroup];
     return (
       <div className='price-desc'>
         <div className='item'>
           $ <span className='bold-txt'>{price}</span>
-          {' / '} {t('次')}
+          {mapUnit[record.type]}
         </div>
       </div>
     );
@@ -283,7 +287,7 @@ const ModelSquare = () => {
     type: [],
     tags: [],
     manufacturer: [],
-    price_type: null,
+    price_type: [],
     context: null,
     specification: null,
     publish_time: null,
@@ -380,7 +384,7 @@ const ModelSquare = () => {
             showClear
             onChange={debounce(
               (v) => {
-                handleInputValueChange('context', v.trim());
+                handleInputValueChange('model', v.trim());
               },
               300,
               false,

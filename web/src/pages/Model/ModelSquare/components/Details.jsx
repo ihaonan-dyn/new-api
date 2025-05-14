@@ -228,26 +228,28 @@ const Details = forwardRef((props, ref) => {
           <div className='item'>
             {t('提示')}
             {' $ '}
-            <span className='bold-txt'>{inputRatioPrice}</span> {' / '} 1M
-            tokens
+            <span className='bold-txt'>{inputRatioPrice}</span> {' / M tokens '}
           </div>
           <div className='item'>
             {t('补全')} {' $ '}{' '}
             <span className='bold-txt'>{completionRatioPrice} </span>
-            {' / '}
-            1M tokens
+            {' / M tokens '}
           </div>
         </div>
       );
     }
 
+    const mapUnit = {
+      '生图': ' / Image',
+      '视频': ' / Video',
+    };
     // 按次收费
     let price = data.model_price * groupRatio[selectedGroup];
     return (
       <div className='price-desc'>
         <div className='item'>
           $ <span className='bold-txt'>{price}</span>
-          {' / '} {t('次')}
+          {mapUnit[data.type]}
         </div>
       </div>
     );
@@ -345,7 +347,6 @@ const Details = forwardRef((props, ref) => {
                   'is-pack-up': isPackUp,
                 })}
               >
-                3
                 <span
                   className='cut-btn'
                   onClick={() => {
