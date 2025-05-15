@@ -54,8 +54,14 @@ func testChannel(channel *model.Channel, testModel string) (err error, openAIErr
 		requestPath = "/v1/embeddings" // 修改请求路径
 	}
 
+	method := "POST"
+	if channel.Type == common.ChannelTypeAli {
+		requestPath = "/survival_queue" //健康检查
+		method = "GET"
+	}
+
 	c.Request = &http.Request{
-		Method: "POST",
+		Method: method,
 		URL:    &url.URL{Path: requestPath}, // 使用动态路径
 		Body:   nil,
 		Header: make(http.Header),
@@ -118,6 +124,7 @@ func testChannel(channel *model.Channel, testModel string) (err error, openAIErr
 	requestBody := bytes.NewBuffer(jsonData)
 	c.Request.Body = io.NopCloser(requestBody)
 	resp, err := adaptor.DoRequest(c, info, requestBody)
+
 	if err != nil {
 		return err, nil
 	}
@@ -128,6 +135,11 @@ func testChannel(channel *model.Channel, testModel string) (err error, openAIErr
 			err := service.RelayErrorHandler(httpResp, true)
 			return fmt.Errorf("status code %d: %s", httpResp.StatusCode, err.Error.Message), err
 		}
+		//健康检测不做后面解析
+		if channel.Type == common.ChannelTypeAli {
+			return nil, nil
+		}
+
 	}
 	usageA, respErr := adaptor.DoResponse(c, httpResp, info)
 	if respErr != nil {
@@ -220,6 +232,7 @@ func TestChannel(c *gin.Context) {
 		})
 		return
 	}
+
 	testModel := c.Query("model")
 	tik := time.Now()
 	err, _ = testChannel(channel, testModel)

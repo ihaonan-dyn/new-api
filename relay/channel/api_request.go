@@ -36,9 +36,13 @@ func SetupApiRequestHeader(info *common.RelayInfo, c *gin.Context, req *http.Hea
 }
 
 func DoApiRequest(a Adaptor, c *gin.Context, info *common.RelayInfo, requestBody io.Reader) (*http.Response, error) {
-	fullRequestURL, err := a.GetRequestURL(info)
-	if err != nil {
-		return nil, fmt.Errorf("get request url failed: %w", err)
+	fullRequestURL := info.BaseUrl + c.Request.URL.Path
+	if fullRequestURL == "" {
+		var err error
+		fullRequestURL, err = a.GetRequestURL(info)
+		if err != nil {
+			return nil, fmt.Errorf("get request url failed: %w", err)
+		}
 	}
 	if common2.DebugEnabled {
 		println("fullRequestURL:", fullRequestURL)
