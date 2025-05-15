@@ -358,7 +358,7 @@ function GenerateVideo() {
                 value={videoFromImageInputs.model}
               >
                 {modelOptions.map((item) => (
-                  <Select.Option key={item.model} value={item.model}>
+                  <Select.Option key={item.model} value={item}>
                     {item.model}
                   </Select.Option>
                 ))}
