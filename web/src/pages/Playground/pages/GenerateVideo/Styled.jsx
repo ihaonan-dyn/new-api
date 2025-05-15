@@ -2,7 +2,8 @@ import styled from 'styled-components';
 
 const PageContainer = styled.main`
   display: flex;
-  height: calc(100vh - 60px - 48px - 20px - 2px);
+  flex:1;
+  overflow: hidden;
   gap: 12px;
   ul {
     list-style: none;

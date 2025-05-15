@@ -1,4 +1,10 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { UserContext } from '../../context/User/index.js';
 import {
@@ -64,13 +70,15 @@ const Playground = () => {
     },
   ];
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  /* 查询字符串路径参数 */
+  const model = searchParams.get('model');
   const [inputs, setInputs] = useState({
-    model: 'Qwen2.5-7B-Instruct',
+    model: model || 'Qwen2.5-7B-Instruct',
     group: 'default',
     max_tokens: 0,
     temperature: 0,
   });
-  const [searchParams, setSearchParams] = useSearchParams();
   const [userState, userDispatch] = useContext(UserContext);
   const [status, setStatus] = useState({});
   const [systemPrompt, setSystemPrompt] = useState(
@@ -79,11 +87,12 @@ const Playground = () => {
   const [message, setMessage] = useState(defaultMessage);
   const [models, setModels] = useState([
     {
-      label: 'Qwen2.5-7B-Instruct',
-      value: 'Qwen2.5-7B-Instruct',
+      model: 'Qwen2.5-7B-Instruct',
+      enable_group: [
+        'default',
+      ]
     },
   ]);
-  const [groups, setGroups] = useState([]);
   const [showSettings, setShowSettings] = useState(true);
   const [styleState, styleDispatch] = useContext(StyleContext);
 
@@ -100,66 +109,62 @@ const Playground = () => {
       status = JSON.parse(status);
       setStatus(status);
     }
-    // loadModels();
+    handleGetModelOptions();
     loadGroups();
   }, []);
 
-  const loadModels = async () => {
-    let res = await API.get(`/api/user/models`);
-    const { success, message, data } = res.data;
-    if (success) {
-      let localModelOptions = data.map((model) => ({
-        label: model,
-        value: model,
-      }));
-      setModels(localModelOptions);
-      handleInputChange('model', localModelOptions[0].value || '');
-    } else {
-      showError(t(message));
-    }
+  const handleGetModelOptions = async () => {
+    const params = {
+      type: ['对话'],
+      status: 1,
+    };
+    try {
+      const { data:{data,success} } = await API.post('/api/model_list', params);
+      if (success && data.length) {
+        setModels(data);
+        const { enable_group } = data[0];
+     
+        if(!model){
+          handleInputChange('group', enable_group[0]);
+          handleInputChange('model', data[0].model);
+          setEnable_group(enable_group);
+        }
+
+      }
+    } catch (error) {}
   };
+
+  /* 以模型列表中的可用分组列表作为选项 */
+  const [enable_group, setEnable_group] = useState(() => {
+    const params = searchParams.get('enable_group');
+    const result = params ? JSON.parse(params) : [];
+    if (!Array.isArray(result)) {
+      throw new Error('enable_group is not a valid array');
+    }
+    return result;
+  });
+  const [groupDict, setGroupDict] = useState(null);
+
+  const groupsOptions = useMemo(() => {
+    if (!groupDict || !enable_group?.length) {
+      return [];
+    }
+    return enable_group.map((group) => {
+      const info = groupDict[group];
+      return {
+        label: truncateText(info.desc, '50%'),
+        value: group,
+        ratio: info.ratio,
+        fullLabel: info.desc, // 保存完整文本用于tooltip
+      };
+    });
+  }, [groupDict, enable_group]);
 
   const loadGroups = async () => {
     let res = await API.get(`/api/user/self/groups`);
     const { success, message, data } = res.data;
     if (success) {
-      let localGroupOptions = Object.entries(data).map(([group, info]) => ({
-        label: truncateText(info.desc, '50%'),
-        value: group,
-        ratio: info.ratio,
-        fullLabel: info.desc, // 保存完整文本用于tooltip
-      }));
-
-      if (localGroupOptions.length === 0) {
-        localGroupOptions = [
-          {
-            label: t('用户分组'),
-            value: '',
-            ratio: 1,
-          },
-        ];
-      } else {
-        const localUser = JSON.parse(localStorage.getItem('user'));
-        const userGroup =
-          (userState.user && userState.user.group) ||
-          (localUser && localUser.group);
-
-        if (userGroup) {
-          const userGroupIndex = localGroupOptions.findIndex(
-            (g) => g.value === userGroup,
-          );
-          if (userGroupIndex > -1) {
-            const userGroupOption = localGroupOptions.splice(
-              userGroupIndex,
-              1,
-            )[0];
-            localGroupOptions.unshift(userGroupOption);
-          }
-        }
-      }
-
-      setGroups(localGroupOptions);
-      handleInputChange('group', localGroupOptions[0].value);
+      setGroupDict(data);
     } else {
       showError(t(message));
     }
@@ -378,7 +383,7 @@ const Playground = () => {
               }}
               value={inputs.group}
               autoComplete='new-password'
-              optionList={groups}
+              optionList={groupsOptions}
               renderOptionItem={renderGroupOption}
               style={{ width: '100%' }}
             />
@@ -394,12 +399,21 @@ const Playground = () => {
               searchPosition='dropdown'
               filter
               onChange={(value) => {
-                handleInputChange('model', value);
+                handleInputChange('model', value.model);
+                if( value.enable_group){
+                  setEnable_group(value.enable_group);
+                  handleInputChange('group', value.enable_group[0]);
+                }
               }}
               value={inputs.model}
               autoComplete='new-password'
-              optionList={models}
-            />
+            >
+              {models.map((item) => (
+                <Select.Option key={item.model} value={item}>
+                  {item.model}
+                </Select.Option>
+              ))}
+            </Select>
             <div style={{ marginTop: 10 }}>
               <Typography.Text strong>Temperature：</Typography.Text>
             </div>

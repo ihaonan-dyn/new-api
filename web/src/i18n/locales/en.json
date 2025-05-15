@@ -1478,5 +1478,29 @@
   "提示价格：${{price}} / 1M tokens": "Prompt price: ${{price}} / 1M tokens",
   "补全价格：${{price}} * {{completionRatio}} = ${{total}} / 1M tokens (补全倍率: {{completionRatio}})": "Completion price: ${{price}} * {{completionRatio}} = ${{total}} / 1M tokens (completion ratio: {{completionRatio}})",
   "补全价格：${{price}} * {{ratio}} = ${{total}} / 1M tokens": "Completion price: ${{price}} * {{ratio}} = ${{total}} / 1M tokens",
-  "模型价格 ${{price}}，{{ratioType}} {{ratio}}": "Model price ${{price}}, {{ratioType}} {{ratio}}"
+  "模型价格 ${{price}}，{{ratioType}} {{ratio}}": "Model price ${{price}}, {{ratioType}} {{ratio}}",
+
+  
+  "系列 / 厂商": "Series / Manufacturer",
+  "上下文": "Context",
+  "规格": "Specification",
+  "发布日期": "Release Date",
+  "免费": "Free",
+  "计费": "Charging",
+  "近 30 天": "Last 30 days",
+  "近 90 天": "Last 90 days",
+  "{{text}} 以下": "{{text}} below",
+  "{{text}} 以上": "{{text}} above",
+  "模型广场": "Model Square",
+  "展开筛选器": "Expand filters",
+  "隐藏筛选器": "Hide filters",
+  "请输入模型名称": "Please enter model name",
+  "不可用": "Unavailable",
+  "在线体验": "Online experience",
+  "API 文档": "API documentation",
+  "该模型暂不可用": "This model is temporarily unavailable",
+  "链接已复制！": "Link copied!",
+  "对话": "Chat",
+  "生图": "Image",
+  "视频": "Video"
 }

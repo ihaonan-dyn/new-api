@@ -1,3 +1,4 @@
+import LoadingContent from '@/components/LoadingContent';
 import { UserContext } from '@/context/User/index.js';
 import { API } from '@/helpers';
 import { renderGroupOption, truncateText } from '@/helpers/render.js';
@@ -7,38 +8,68 @@ import {
   InputNumber,
   Select,
   Slider,
-  Spin,
   TextArea,
   Tooltip,
   Typography,
 } from '@douyinfe/semi-ui';
 import classNames from 'classnames';
-import { useContext, useEffect, useState } from 'react';
-import PageContainer from './Styled';
 import { t } from 'i18next';
+import { useContext, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import PageContainer from './Styled';
 
+let taskTimer = null;
 function GenerateImage() {
+  const handleCleartaskTimer = () => {
+    if (taskTimer === null) {
+      return;
+    }
+    clearTimeout(taskTimer);
+    taskTimer = null;
+  };
   const [userState, userDispatch] = useContext(UserContext);
+  // 查询字符串参数
+  const [searchParams] = useSearchParams();
+  const model = searchParams.get('model');
   // 提交状态
   const [submitLoading, setSubmitLoading] = useState(false);
   const [inputs, setInputs] = useState({
-    model: 'wanx2.1-t2i-turbo', // 模型
+    model: searchParams.get('model') || 'wanx2.1-t2i-turbo', // 模型
     prompt: '', // 提示词
     seed: 214748364, // 种子
     size: '1024*1024', // 比例
     n: 1,
-    group: '',
+    group: 'default',
   });
   const handleInputChange = (name, value) => {
     setInputs((inputs) => ({ ...inputs, [name]: value }));
   };
   /* 模型 */
-  const modelOptions = [
+  const [modelOptions, setModelOptions] = useState([
     {
-      label: 'wanx2.1-t2i-turbo',
-      value: 'wanx2.1-t2i-turbo',
+      model: 'wanx2.1-t2i-turbo',
+      enable_group: ['default']
     },
-  ];
+  ]);
+
+  const handleGetModelOptions = async () => {
+    const params = {
+      type: ['生图'],
+      status: 1,
+    };
+    try {
+      const { data:{data,success} } = await API.post('/api/model_list', params);
+      if (success && data.length) {
+        setModelOptions(data);
+        const { enable_group } = data[0];
+        if(!model){
+          handleInputChange('model', data[0].model);
+          enable_group?.length && handleInputChange('group', enable_group[0]);
+          setEnable_group(enable_group);
+        }
+      }
+    } catch (error) {}
+  };
 
   /* 比例 */
   const sizeOptions = [
@@ -120,48 +151,35 @@ function GenerateImage() {
 
   const [url, setUrl] = useState([]);
   /* 分组 */
-  const [groups, setGroups] = useState([]);
-  const loadGroups = async () => {
-    let res = await API.get(`/api/user/self/groups`);
-    const { success, message, data } = res.data;
-    if (success) {
-      let localGroupOptions = Object.entries(data).map(([group, info]) => ({
+  const [enable_group, setEnable_group] = useState(() => {
+    const params = searchParams.get('enable_group');
+    const result = params ? JSON.parse(params) : [];
+    if (!Array.isArray(result)) {
+      throw new Error('enable_group is not a valid array');
+    }
+    return result;
+  });
+  const [groupDict, setGroupDict] = useState(null);
+
+  const groupsOptions = useMemo(() => {
+    if (!groupDict || !enable_group?.length) {
+      return [];
+    }
+    return enable_group.map((group) => {
+      const info = groupDict[group];
+      return {
         label: truncateText(info.desc, '50%'),
         value: group,
         ratio: info.ratio,
         fullLabel: info.desc, // 保存完整文本用于tooltip
-      }));
-
-      if (localGroupOptions.length === 0) {
-        localGroupOptions = [
-          {
-            label: t('用户分组'),
-            value: '',
-            ratio: 1,
-          },
-        ];
-      } else {
-        const localUser = JSON.parse(localStorage.getItem('user'));
-        const userGroup =
-          (userState.user && userState.user.group) ||
-          (localUser && localUser.group);
-
-        if (userGroup) {
-          const userGroupIndex = localGroupOptions.findIndex(
-            (g) => g.value === userGroup,
-          );
-          if (userGroupIndex > -1) {
-            const userGroupOption = localGroupOptions.splice(
-              userGroupIndex,
-              1,
-            )[0];
-            localGroupOptions.unshift(userGroupOption);
-          }
-        }
-      }
-
-      setGroups(localGroupOptions);
-      handleInputChange('group', localGroupOptions[0].value);
+      };
+    });
+  }, [groupDict, enable_group]);
+  const loadGroups = async () => {
+    let res = await API.get(`/api/user/self/groups`);
+    const { success, message, data } = res.data;
+    if (success) {
+      setGroupDict(data);
     } else {
       showError(t(message));
     }
@@ -180,7 +198,7 @@ function GenerateImage() {
       setSubmitLoading(false);
     }
   };
-  let taskTimer = null;
+
   // 处理任务结果
   const handleTastResult = async () => {
     setSubmitLoading(true);
@@ -195,8 +213,10 @@ function GenerateImage() {
       if (data.task_status === 'SUCCESS') {
         setSubmitLoading(false);
         setUrl(data.task_result.url); // 触发组件重渲染，更新 taskInfo.urlLis
+        handleCleartaskTimer();
         return;
       }
+      handleCleartaskTimer();
       taskTimer = setTimeout(() => {
         handleTastResult();
       }, 5000);
@@ -208,16 +228,14 @@ function GenerateImage() {
       handleTastResult();
     }
     return () => {
-      if (taskTimer) {
-        clearTimeout(taskTimer); // 清除定时器
-        taskTimer = null; // 将定时器变量设置为 null
-      }
+      handleCleartaskTimer();
     };
   }, []); // 添加依赖项，确保在 task_id 变化时重新执行 handleTastResult
 
   // 初始化操作
   useEffect(() => {
     loadGroups();
+    handleGetModelOptions();
   }, []);
 
   // 关闭任务
@@ -243,7 +261,7 @@ function GenerateImage() {
               }}
               value={inputs.group}
               autoComplete='new-password'
-              optionList={groups}
+              optionList={groupsOptions}
               renderOptionItem={renderGroupOption}
               style={{ width: '100%' }}
             />
@@ -258,11 +276,20 @@ function GenerateImage() {
           <div className={'content'}>
             <Select
               onChange={(value) => {
-                handleInputChange('model', value);
+                handleInputChange('model', value.model);
+                if( value.enable_group){
+                  setEnable_group(value.enable_group);
+                  handleInputChange('group', value.enable_group[0]);
+                }
               }}
-              optionList={modelOptions}
               value={inputs.model}
-            ></Select>
+            >
+              {modelOptions.map((item) => (
+                <Select.Option key={item.model} value={item}>
+                  {item.model}
+                </Select.Option>
+              ))}
+            </Select>
           </div>
         </section>
         <section className='sec size'>
@@ -358,18 +385,15 @@ function GenerateImage() {
       </aside>
       <main className='container'>
         <div className='preview-container'>
-          {submitLoading && (
-            <div className='loading-mask'>
-              <Spin size='large' />
+          <LoadingContent loading={submitLoading}>
+            <div className='scroll-box'>
+              {url.map((item) => (
+                <div className='item' key={item}>
+                  <img src={item} alt='' />
+                </div>
+              ))}
             </div>
-          )}
-          <div className='scroll-box'>
-            {url.map((item) => (
-              <div className='item' key={item}>
-                <img src={item} alt='' />
-              </div>
-            ))}
-          </div>
+          </LoadingContent>
         </div>
         <ul className='prompt-tags'>
           {promptTags.map((item, index) => (

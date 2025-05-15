@@ -3,32 +3,66 @@ import { API } from '@/helpers';
 import { renderGroupOption, truncateText } from '@/helpers/render.js';
 import { IconAlertCircle, IconSend } from '@douyinfe/semi-icons';
 import {
+  Button,
   Image,
   Select,
   Spin,
   TextArea,
   Tooltip,
   Typography,
-  Button,
 } from '@douyinfe/semi-ui';
 import classNames from 'classnames';
 import { t } from 'i18next';
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import PageContainer from './Styled';
-import generateTaskStore from '@/store/generateTaskStore';
+import { useSearchParams } from 'react-router-dom';
 import TaskList from './components/TaskList';
+import PageContainer from './Styled';
+import LoadingContent from '@/components/LoadingContent';
+
+let taskTimer = null;
 
 function GenerateVideo() {
+  const [searchParams] = useSearchParams();
+  const model = searchParams.get('model');
   // 提交状态
   const [submitLoading, setSubmitLoading] = useState(false);
   const [userState] = useContext(UserContext);
   /* 模型 */
-  const modelOptions = [
+  const [modelOptions, setModelOptions] = useState([
     {
-      label: 'wan2.1模型',
-      value: 'wan2.1模型',
+      model: 'wan2.1模型',
+      enable_group: ['default'],
     },
-  ];
+  ]);
+
+  const handleGetModelOptions = async () => {
+    const params = {
+      type: ['视频'],
+      status: 1,
+    };
+    try {
+      const {
+        data: { data, success },
+      } = await API.post('/api/model_list', params);
+      if (success && data.length) {
+        setModelOptions(data);
+        const { enable_group } = data[0];
+        if (!model) {
+          handleChangeImageInputs({
+            model: data[0].model,
+            group: enable_group[0],
+          });
+          setImageEnableGroup(enable_group);
+          handleChangeTextInputs({
+            model: data[0].model,
+            group: enable_group[0],
+          });
+          setTextEnableGroup(enable_group);
+         
+        }
+      }
+    } catch (error) {}
+  };
 
   const sizeOptions = [
     {
@@ -96,54 +130,13 @@ function GenerateVideo() {
   /* 视频url */
   const [url, setUrl] = useState('');
 
-  /* 分组 */
-  const [groups, setGroups] = useState([]);
+  const [groupDict, setGroupDict] = useState(null);
+
   const loadGroups = async () => {
     let res = await API.get(`/api/user/self/groups`);
     const { success, message, data } = res.data;
     if (success) {
-      let localGroupOptions = Object.entries(data).map(([group, info]) => ({
-        label: truncateText(info.desc, '50%'),
-        value: group,
-        ratio: info.ratio,
-        fullLabel: info.desc, // 保存完整文本用于tooltip
-      }));
-
-      if (localGroupOptions.length === 0) {
-        localGroupOptions = [
-          {
-            label: t('用户分组'),
-            value: '',
-            ratio: 1,
-          },
-        ];
-      } else {
-        const localUser = JSON.parse(localStorage.getItem('user'));
-        const userGroup =
-          (userState.user && userState.user.group) ||
-          (localUser && localUser.group);
-
-        if (userGroup) {
-          const userGroupIndex = localGroupOptions.findIndex(
-            (g) => g.value === userGroup,
-          );
-          if (userGroupIndex > -1) {
-            const userGroupOption = localGroupOptions.splice(
-              userGroupIndex,
-              1,
-            )[0];
-            localGroupOptions.unshift(userGroupOption);
-          }
-        }
-      }
-
-      setGroups(localGroupOptions);
-      handleChangeTextInputs({
-        group: localGroupOptions[0]?.value || '',
-      });
-      handleChangeImageInputs({
-        group: localGroupOptions[0]?.value || '',
-      });
+      setGroupDict(data);
     } else {
       showError(t(message));
     }
@@ -151,7 +144,7 @@ function GenerateVideo() {
 
   /* 文生视频组件 */
   const [videoFromTextInputs, setVideoFromTextInputs] = useState({
-    model: 'wan2.1模型',
+    model: model || 'wan2.1模型',
     size: sizeOptions[0].value,
     group: 'default',
   });
@@ -164,8 +157,31 @@ function GenerateVideo() {
     setVideoFromTextInputs({ ...videoFromTextInputs, ...params });
   };
 
+  const [textEnableGroup,setTextEnableGroup] = useState(() => {
+    const params = searchParams.get('enable_group');
+    const result = params ? JSON.parse(params) : [];
+    if (!Array.isArray(result)) {
+      throw new Error('enable_group is not a valid array');
+    }
+    return result;
+  });
+
   const TextGenerate = {
     aside: () => {
+      const groupsOptions = useMemo(() => {
+        if (!groupDict || !textEnableGroup?.length) {
+          return [];
+        }
+        return textEnableGroup.map((group) => {
+          const info = groupDict[group];
+          return {
+            label: truncateText(info.desc, '50%'),
+            value: group,
+            ratio: info.ratio,
+            fullLabel: info.desc, // 保存完整文本用于tooltip
+          };
+        });
+      }, [groupDict, textEnableGroup]);
       return (
         <>
           <section className='sec'>
@@ -187,7 +203,7 @@ function GenerateVideo() {
                 }}
                 value={videoFromTextInputs.group}
                 autoComplete='new-password'
-                optionList={groups}
+                optionList={groupsOptions}
                 renderOptionItem={renderGroupOption}
                 style={{ width: '100%' }}
               />
@@ -202,11 +218,20 @@ function GenerateVideo() {
             <div className={'content'}>
               <Select
                 onChange={(value) => {
-                  handleChangeTextInputs({ model: value });
+                  handleChangeTextInputs({
+                    model: value.model,
+                    group: value.enable_group[0],
+                  });
+                  setTextEnableGroup(value.enable_group);
                 }}
-                optionList={modelOptions}
                 value={videoFromTextInputs.model}
-              ></Select>
+              >
+                {modelOptions.map((item) => (
+                  <Select.Option key={item.model} value={item}>
+                    {item.model}
+                  </Select.Option>
+                ))}
+              </Select>
             </div>
           </section>
           <section className='sec size'>
@@ -252,7 +277,7 @@ function GenerateVideo() {
 
   /* 图生视频组件 */
   const [videoFromImageInputs, setVideoFromImageInputs] = useState({
-    model: 'wan2.1模型',
+    model: model || 'wan2.1模型',
     prompt: '',
     img_url: '',
     group: 'default',
@@ -270,8 +295,32 @@ function GenerateVideo() {
     setVideoFromImageInputs({ ...videoFromImageInputs, ...params });
   };
 
+  const [imageEnableGroup,setImageEnableGroup] = useState(() => {
+    const params = searchParams.get('enable_group');
+    const result = params ? JSON.parse(params) : [];
+    if (!Array.isArray(result)) {
+      throw new Error('enable_group is not a valid array');
+    }
+    return result;
+  });
+
+  /* 任务结果 */
   const ImageGenerate = {
     aside: () => {
+      const groupsOptions = useMemo(() => {
+        if (!groupDict || !imageEnableGroup?.length) {
+          return [];
+        }
+        return imageEnableGroup.map((group) => {
+          const info = groupDict[group];
+          return {
+            label: truncateText(info.desc, '50%'),
+            value: group,
+            ratio: info.ratio,
+            fullLabel: info.desc, // 保存完整文本用于tooltip
+          };
+        });
+      }, [groupDict, imageEnableGroup]);
       const [loading, setLoading] = useState(false);
       const handleFileChange = async (event) => {
         if (loading) return;
@@ -310,7 +359,7 @@ function GenerateVideo() {
                 }}
                 value={videoFromImageInputs.group}
                 autoComplete='new-password'
-                optionList={groups}
+                optionList={groupsOptions}
                 renderOptionItem={renderGroupOption}
                 style={{ width: '100%' }}
               />
@@ -325,11 +374,20 @@ function GenerateVideo() {
             <div className={'content'}>
               <Select
                 onChange={(value) => {
-                  handleChangeImageInputs({ model: value });
+                  handleChangeImageInputs({
+                    model: value.model,
+                    group: value.enable_group[0],
+                  });
+                  setImageEnableGroup(value.enable_group);
                 }}
-                optionList={modelOptions}
                 value={videoFromImageInputs.model}
-              ></Select>
+              >
+                {modelOptions.map((item) => (
+                  <Select.Option key={item.model} value={item}>
+                    {item.model}
+                  </Select.Option>
+                ))}
+              </Select>
             </div>
           </section>
           <section className='sec required upload-image'>
@@ -392,7 +450,6 @@ function GenerateVideo() {
   const handleChangeTask = (item) => {
     taskInfo.task_id = item.task_id;
     setPrompt(item.input.prompt);
-    setSubmitLoading(false);
     if (item.input.img_url) {
       setType(TypeEnum.image);
       handleChangeImageInputs(item.input);
@@ -412,9 +469,11 @@ function GenerateVideo() {
           ...videoFromTextInputs,
           prompt,
         });
+        taskInfo.task_id = data.task_id;
         handleChangeTaskInfo({
           task_id: data.task_id,
         });
+
         taskListRef.current?.handleRefresh();
         handleTastResult();
       } catch (error) {
@@ -444,7 +503,7 @@ function GenerateVideo() {
   };
   // 开始任务
   const handleStartTask = async () => {
-    if (submitLoading || !prompt) {
+    if (!prompt) {
       return;
     }
     const callback = startTaskHandlerMap[type];
@@ -452,18 +511,18 @@ function GenerateVideo() {
       return;
     }
     callback();
+    setUrl('');
     taskListRef.current?.handleRefresh();
   };
 
-  let taskTimer = null;
-  const handleCleartaskTimer = ()=>{
-    if(taskTimer === null){
+  const handleCleartaskTimer = () => {
+    if (taskTimer === null) {
       return;
     }
 
     clearTimeout(taskTimer);
     taskTimer = null;
-  }
+  };
   // 处理任务结果
   const handleTastResult = async () => {
     setSubmitLoading(true);
@@ -476,6 +535,7 @@ function GenerateVideo() {
         return;
       }
       if (data.task_status === 'SUCCESS') {
+        handleCleartaskTimer();
         setSubmitLoading(false);
         setUrl(data.task_result.url);
         taskListRef.current?.handleUpdateTask((list) => {
@@ -483,18 +543,23 @@ function GenerateVideo() {
           item.task_status = 'SUCCESS';
           return list;
         });
+
         return;
       }
-      handleCleartaskTimer()
+      handleCleartaskTimer();
       taskTimer = setTimeout(() => {
         handleTastResult();
       }, 5000);
-    } catch (error) {}
+    } catch (error) {
+      handleCleartaskTimer();
+      setSubmitLoading(false);
+    }
   };
 
   // 初始化操作
   useEffect(() => {
     loadGroups();
+    handleGetModelOptions();
   }, []);
 
   useEffect(() => {
@@ -534,15 +599,11 @@ function GenerateVideo() {
       </aside>
       <main className='container'>
         <div className='preview-container'>
-          {submitLoading && (
-            <div className='loading-mask'>
-              <Spin size='large' />
+          <LoadingContent loading={submitLoading}>
+            <div className='video-container'>
+              {url && <video src={url} controls></video>}
             </div>
-          )}
-          <div className='scroll-box'></div>
-          <div className='video-container'>
-            {url && !submitLoading && <video src={url} controls></video>}
-          </div>
+          </LoadingContent>
         </div>
         <ul className='prompt-tags'>
           {promptTags.map((item, index) => (

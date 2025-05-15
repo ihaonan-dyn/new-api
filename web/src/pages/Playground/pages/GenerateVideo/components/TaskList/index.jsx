@@ -78,7 +78,7 @@ const TaskId = styled.span`
 `;
 
 const Prompt = styled.div`
-  color: var(--semi-color-text-0);;
+  color: var(--semi-color-text-0);
   margin-bottom: 12px;
   line-height: 1.5;
 `;
@@ -172,6 +172,7 @@ const renderStatus = (type) => {
  * } params
  */
 const TaskList = forwardRef((params, ref) => {
+  const isFirst = useRef(true);
   const [state, setState] = useState({});
   const handleUpdate = () => {
     setState({});
@@ -199,8 +200,11 @@ const TaskList = forwardRef((params, ref) => {
           return pre.concat(data);
         });
       }
-      if (!params.task_id && data.length > 0) {
+      // 初始化赋值
+      if(isFirst.current){
+        isFirst.current = false;
         handleChangeTask(data[0]);
+        !params.task_id && data.length > 0 && handleChangeTask(data[0]);
       }
     } catch (error) {}
     isLoading.current = false;
