@@ -47,16 +47,18 @@ function GenerateVideo() {
       if (success && data.length) {
         setModelOptions(data);
         const { enable_group } = data[0];
-        setEnable_group(enable_group);
         if (!model) {
-          handleChangeImageInputs({ model: data[0].model });
-          handleChangeTextInputs({ model: data[0].model });
-        }
-
-        // 回显分组
-        if (enable_group?.lengt) {
-          handleChangeImageInputs({ group: enable_group[0] });
-          handleChangeTextInputs({ group: enable_group[0] });
+          handleChangeImageInputs({
+            model: data[0].model,
+            group: enable_group[0],
+          });
+          setImageEnableGroup(enable_group);
+          handleChangeTextInputs({
+            model: data[0].model,
+            group: enable_group[0],
+          });
+          setTextEnableGroup(enable_group);
+         
         }
       }
     } catch (error) {}
@@ -128,31 +130,7 @@ function GenerateVideo() {
   /* 视频url */
   const [url, setUrl] = useState('');
 
-  /* 分组 */
-  const [enable_group, setEnable_group] = useState(() => {
-    const params = searchParams.get('enable_group');
-    const result = params ? JSON.parse(params) : [];
-    if (!Array.isArray(result)) {
-      throw new Error('enable_group is not a valid array');
-    }
-    return result;
-  });
   const [groupDict, setGroupDict] = useState(null);
-
-  const groupsOptions = useMemo(() => {
-    if (!groupDict || !enable_group?.length) {
-      return [];
-    }
-    return enable_group.map((group) => {
-      const info = groupDict[group];
-      return {
-        label: truncateText(info.desc, '50%'),
-        value: group,
-        ratio: info.ratio,
-        fullLabel: info.desc, // 保存完整文本用于tooltip
-      };
-    });
-  }, [groupDict, enable_group]);
 
   const loadGroups = async () => {
     let res = await API.get(`/api/user/self/groups`);
@@ -179,8 +157,31 @@ function GenerateVideo() {
     setVideoFromTextInputs({ ...videoFromTextInputs, ...params });
   };
 
+  const [textEnableGroup,setTextEnableGroup] = useState(() => {
+    const params = searchParams.get('enable_group');
+    const result = params ? JSON.parse(params) : [];
+    if (!Array.isArray(result)) {
+      throw new Error('enable_group is not a valid array');
+    }
+    return result;
+  });
+
   const TextGenerate = {
     aside: () => {
+      const groupsOptions = useMemo(() => {
+        if (!groupDict || !textEnableGroup?.length) {
+          return [];
+        }
+        return textEnableGroup.map((group) => {
+          const info = groupDict[group];
+          return {
+            label: truncateText(info.desc, '50%'),
+            value: group,
+            ratio: info.ratio,
+            fullLabel: info.desc, // 保存完整文本用于tooltip
+          };
+        });
+      }, [groupDict, textEnableGroup]);
       return (
         <>
           <section className='sec'>
@@ -221,7 +222,7 @@ function GenerateVideo() {
                     model: value.model,
                     group: value.enable_group[0],
                   });
-                  setEnable_group(value.enable_group);
+                  setTextEnableGroup(value.enable_group);
                 }}
                 value={videoFromTextInputs.model}
               >
@@ -294,8 +295,32 @@ function GenerateVideo() {
     setVideoFromImageInputs({ ...videoFromImageInputs, ...params });
   };
 
+  const [imageEnableGroup,setImageEnableGroup] = useState(() => {
+    const params = searchParams.get('enable_group');
+    const result = params ? JSON.parse(params) : [];
+    if (!Array.isArray(result)) {
+      throw new Error('enable_group is not a valid array');
+    }
+    return result;
+  });
+
+  /* 任务结果 */
   const ImageGenerate = {
     aside: () => {
+      const groupsOptions = useMemo(() => {
+        if (!groupDict || !imageEnableGroup?.length) {
+          return [];
+        }
+        return imageEnableGroup.map((group) => {
+          const info = groupDict[group];
+          return {
+            label: truncateText(info.desc, '50%'),
+            value: group,
+            ratio: info.ratio,
+            fullLabel: info.desc, // 保存完整文本用于tooltip
+          };
+        });
+      }, [groupDict, imageEnableGroup]);
       const [loading, setLoading] = useState(false);
       const handleFileChange = async (event) => {
         if (loading) return;
@@ -353,7 +378,7 @@ function GenerateVideo() {
                     model: value.model,
                     group: value.enable_group[0],
                   });
-                  setEnable_group(value.enable_group);
+                  setImageEnableGroup(value.enable_group);
                 }}
                 value={videoFromImageInputs.model}
               >

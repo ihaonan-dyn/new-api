@@ -30,6 +30,7 @@ function GenerateImage() {
   const [userState, userDispatch] = useContext(UserContext);
   // 查询字符串参数
   const [searchParams] = useSearchParams();
+  const model = searchParams.get('model');
   // 提交状态
   const [submitLoading, setSubmitLoading] = useState(false);
   const [inputs, setInputs] = useState({
@@ -61,10 +62,11 @@ function GenerateImage() {
       if (success && data.length) {
         setModelOptions(data);
         const { enable_group } = data[0];
-        setEnable_group(enable_group);
-        !model && handleInputChange('model', data[0].model);
-        // 回显分组
-        enable_group?.length && handleInputChange('group', enable_group[0]);
+        if(!model){
+          handleInputChange('model', data[0].model);
+          enable_group?.length && handleInputChange('group', enable_group[0]);
+          setEnable_group(enable_group);
+        }
       }
     } catch (error) {}
   };

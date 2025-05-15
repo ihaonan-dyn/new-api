@@ -2,13 +2,10 @@ import { IconChevronDown } from '@douyinfe/semi-icons';
 import classNames from 'classnames';
 // import { t,i18n } from 'i18next';
 import { API } from '@/helpers';
-import React, {
-  useEffect,
-  useMemo,
-  useState
-} from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
+import LoadingContent from '@/components/LoadingContent';
 
 // 侧边栏容器
 const SidebarContainer = styled.div`
@@ -117,6 +114,7 @@ const Sidebar = (props) => {
     specs: true,
     releaseDate: true,
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const { t, i18n } = useTranslation();
 
@@ -136,7 +134,7 @@ const Sidebar = (props) => {
     // 系列/厂商
     modelManufacturers: [],
     // 价格
-    price:()=> [
+    price: () => [
       {
         name: t('免费'),
         value: 1,
@@ -166,7 +164,7 @@ const Sidebar = (props) => {
       },
     ],
     // 规格
-    specs:()=> [
+    specs: () => [
       { name: 'MoE', value: 1 },
       {
         name: t('{{text}} 以下', {
@@ -184,13 +182,14 @@ const Sidebar = (props) => {
       },
     ],
     // 发布日期
-    releaseDate: ()=> [
+    releaseDate: () => [
       { name: t('近 30 天'), value: 1 },
       { name: t('近 90 天'), value: 2 },
     ],
   });
   // const [isLoading, setIsLoading] = useState(false);
   const handleGetOptions = async () => {
+    setIsLoading(true);
     try {
       const { data } = await API.get('/api/model_filter');
       data.success &&
@@ -201,6 +200,7 @@ const Sidebar = (props) => {
     } catch (error) {
       console.error(error);
     }
+    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -234,10 +234,9 @@ const Sidebar = (props) => {
   //   规格
   const specsOptions = useMemo(() => {
     return openSections.specs ? options.specs() : options.specs().slice(0, 2);
-  }, [options.specs,i18n.language]);
+  }, [options.specs, i18n.language]);
   //   发布日期
   const releaseDateOptions = options.releaseDate();
-
 
   return (
     <SidebarContainer
@@ -245,175 +244,177 @@ const Sidebar = (props) => {
         'is-hide': isHide,
       })}
     >
-      <div className='scroll-wrapper common-scroll-container'>
-        <section className='sec'>
-          <Title>
-            {t('类型')}
-            <IconChevronDown
-              className={classNames({ unfold: openSections.type })}
-              onClick={() => toggleSection('type')}
-            />
-          </Title>
-          <OptionContainer>
-            {typeOptions.map((item) => (
-              <TagButton
-                key={item}
-                className={classNames({
-                  active: inputValue.type.includes(item),
-                })}
-                onClick={() => {
-                  handleArrInputVal('type', item);
-                }}
-              >
-                <span className='txt'> {item}</span>
-              </TagButton>
-            ))}
-          </OptionContainer>
-        </section>
-        <section className='sec'>
-          <Title>
-            {t('标签')}
-            <IconChevronDown
-              className={classNames({ unfold: openSections.tag })}
-              onClick={() => toggleSection('tag')}
-            />
-          </Title>
-          <OptionContainer>
-            {tagOptions.map((item) => (
-              <TagButton
-                key={item}
-                className={classNames({
-                  active: inputValue.tags.includes(item),
-                })}
-                onClick={() => {
-                  handleArrInputVal('tags', item);
-                }}
-              >
-                <span className='txt'>{item}</span>
-              </TagButton>
-            ))}
-          </OptionContainer>
-        </section>
-        <section className='sec'>
-          <Title>
-            {t('系列 / 厂商')}
-            <IconChevronDown
-              className={classNames({ unfold: openSections.series })}
-              onClick={() => toggleSection('series')}
-            />
-          </Title>
-          <OptionContainer>
-            {seriesOptions.map((item) => (
-              <TagButton
-                key={item.manufacturer}
-                className={classNames({
-                  active: inputValue.manufacturer.includes(item.manufacturer),
-                })}
-                onClick={() => {
-                  handleArrInputVal('manufacturer', item.manufacturer);
-                }}
-              >
-                <img className='prefix-icon' src={item.icon} alt='' />
-                <span className='txt'>{item.manufacturer}</span>
-              </TagButton>
-            ))}
-          </OptionContainer>
-        </section>
-        <section className='sec'>
-          <Title>
-            {t('价格')}
-            {/* <IconChevronDown
+      <LoadingContent loading={isLoading}>
+        <div className='scroll-wrapper common-scroll-container'>
+          <section className='sec'>
+            <Title>
+              {t('类型')}
+              <IconChevronDown
+                className={classNames({ unfold: openSections.type })}
+                onClick={() => toggleSection('type')}
+              />
+            </Title>
+            <OptionContainer>
+              {typeOptions.map((item) => (
+                <TagButton
+                  key={item}
+                  className={classNames({
+                    active: inputValue.type.includes(item),
+                  })}
+                  onClick={() => {
+                    handleArrInputVal('type', item);
+                  }}
+                >
+                  <span className='txt'> {item}</span>
+                </TagButton>
+              ))}
+            </OptionContainer>
+          </section>
+          <section className='sec'>
+            <Title>
+              {t('标签')}
+              <IconChevronDown
+                className={classNames({ unfold: openSections.tag })}
+                onClick={() => toggleSection('tag')}
+              />
+            </Title>
+            <OptionContainer>
+              {tagOptions.map((item) => (
+                <TagButton
+                  key={item}
+                  className={classNames({
+                    active: inputValue.tags.includes(item),
+                  })}
+                  onClick={() => {
+                    handleArrInputVal('tags', item);
+                  }}
+                >
+                  <span className='txt'>{item}</span>
+                </TagButton>
+              ))}
+            </OptionContainer>
+          </section>
+          <section className='sec'>
+            <Title>
+              {t('系列 / 厂商')}
+              <IconChevronDown
+                className={classNames({ unfold: openSections.series })}
+                onClick={() => toggleSection('series')}
+              />
+            </Title>
+            <OptionContainer>
+              {seriesOptions.map((item) => (
+                <TagButton
+                  key={item.manufacturer}
+                  className={classNames({
+                    active: inputValue.manufacturer.includes(item.manufacturer),
+                  })}
+                  onClick={() => {
+                    handleArrInputVal('manufacturer', item.manufacturer);
+                  }}
+                >
+                  <img className='prefix-icon' src={item.icon} alt='' />
+                  <span className='txt'>{item.manufacturer}</span>
+                </TagButton>
+              ))}
+            </OptionContainer>
+          </section>
+          <section className='sec'>
+            <Title>
+              {t('价格')}
+              {/* <IconChevronDown
             className={classNames({ unfold: openSections.price })}
           /> */}
-          </Title>
-          <OptionContainer>
-            {pricesOptions.map((item) => (
-              <TagButton
-                key={item.value}
-                className={classNames({
-                  active: inputValue.price_type.includes(item.value) ,
-                })}
-                onClick={() => {
-                  handleArrInputVal('price_type', item.value);
-                }}
-              >
-                <span className='txt'>{item.name}</span>
-              </TagButton>
-            ))}
-          </OptionContainer>
-        </section>
-        <section className='sec'>
-          <Title>
-            {t('上下文')}
-            {/* <IconChevronDown
+            </Title>
+            <OptionContainer>
+              {pricesOptions.map((item) => (
+                <TagButton
+                  key={item.value}
+                  className={classNames({
+                    active: inputValue.price_type.includes(item.value),
+                  })}
+                  onClick={() => {
+                    handleArrInputVal('price_type', item.value);
+                  }}
+                >
+                  <span className='txt'>{item.name}</span>
+                </TagButton>
+              ))}
+            </OptionContainer>
+          </section>
+          <section className='sec'>
+            <Title>
+              {t('上下文')}
+              {/* <IconChevronDown
             className={classNames({ unfold: openSections.context })}
           /> */}
-          </Title>
-          <OptionContainer>
-            {contextsOptions.map((item) => (
-              <TagButton
-                key={item.value}
-                className={classNames({
-                  active: inputValue.context === item.value,
-                })}
-                onClick={() => {
-                  handleBasicInputVal('context', item.value);
-                }}
-              >
-                <span className='txt'> {item.name}</span>
-              </TagButton>
-            ))}
-          </OptionContainer>
-        </section>
-        <section className='sec'>
-          <Title>
-            {t('规格')}
-            <IconChevronDown
-              className={classNames({ unfold: openSections.specs })}
-              onClick={() => toggleSection('specs')}
-            />
-          </Title>
-          <OptionContainer>
-            {specsOptions.map((item) => (
-              <TagButton
-                key={item.value}
-                className={classNames({
-                  active: inputValue.specification === item.value,
-                })}
-                onClick={() => {
-                  handleBasicInputVal('specification', item.value);
-                }}
-              >
-                <span className='txt'>{item.name}</span>
-              </TagButton>
-            ))}
-          </OptionContainer>
-        </section>
-        <section className='sec'>
-          <Title>
-            {t('发布日期')}
-            {/* <IconChevronDown
+            </Title>
+            <OptionContainer>
+              {contextsOptions.map((item) => (
+                <TagButton
+                  key={item.value}
+                  className={classNames({
+                    active: inputValue.context === item.value,
+                  })}
+                  onClick={() => {
+                    handleBasicInputVal('context', item.value);
+                  }}
+                >
+                  <span className='txt'> {item.name}</span>
+                </TagButton>
+              ))}
+            </OptionContainer>
+          </section>
+          <section className='sec'>
+            <Title>
+              {t('规格')}
+              <IconChevronDown
+                className={classNames({ unfold: openSections.specs })}
+                onClick={() => toggleSection('specs')}
+              />
+            </Title>
+            <OptionContainer>
+              {specsOptions.map((item) => (
+                <TagButton
+                  key={item.value}
+                  className={classNames({
+                    active: inputValue.specification === item.value,
+                  })}
+                  onClick={() => {
+                    handleBasicInputVal('specification', item.value);
+                  }}
+                >
+                  <span className='txt'>{item.name}</span>
+                </TagButton>
+              ))}
+            </OptionContainer>
+          </section>
+          <section className='sec'>
+            <Title>
+              {t('发布日期')}
+              {/* <IconChevronDown
             className={classNames({ unfold: openSections.releaseDate })}
             onClick={() => toggleSection('releaseDate')}
           /> */}
-          </Title>
-          <OptionContainer>
-            {releaseDateOptions.map((item) => (
-              <TagButton
-                key={item.value}
-                className={classNames({
-                  active: inputValue.publish_time === item.value,
-                })}
-                onClick={() => {
-                  handleBasicInputVal('publish_time', item.value);
-                }}
-              >
-                <span className='txt'>{item.name}</span>
-              </TagButton>
-            ))}
-          </OptionContainer>
-        </section>
-      </div>
+            </Title>
+            <OptionContainer>
+              {releaseDateOptions.map((item) => (
+                <TagButton
+                  key={item.value}
+                  className={classNames({
+                    active: inputValue.publish_time === item.value,
+                  })}
+                  onClick={() => {
+                    handleBasicInputVal('publish_time', item.value);
+                  }}
+                >
+                  <span className='txt'>{item.name}</span>
+                </TagButton>
+              ))}
+            </OptionContainer>
+          </section>
+        </div>
+      </LoadingContent>
     </SidebarContainer>
   );
 };

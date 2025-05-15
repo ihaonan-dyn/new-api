@@ -123,10 +123,13 @@ const Playground = () => {
       if (success && data.length) {
         setModels(data);
         const { enable_group } = data[0];
-        setEnable_group(enable_group);
-        !model && handleInputChange('model', data[0].model);
-        // 回显分组
-        enable_group?.length && handleInputChange('group', enable_group[0]);
+     
+        if(!model){
+          handleInputChange('group', enable_group[0]);
+          handleInputChange('model', data[0].model);
+          setEnable_group(enable_group);
+        }
+
       }
     } catch (error) {}
   };
