@@ -462,6 +462,20 @@ const SiderBar = () => {
           setOpenedKeys(data.openKeys);
         }}
       >
+        <Text style={groupLabelStyle}>{t('模型')}</Text>
+        {modelItems.map((item) => {
+          return (
+            <Nav.Item
+              key={item.itemKey}
+              itemKey={item.itemKey}
+              text={item.text}
+              icon={React.cloneElement(item.icon, {
+                style: iconStyles[item.itemKey],
+              })}
+            />
+          );
+        })}
+
         {/* Chat Section - Only show if there are chat items */}
         {chatMenuItems.map((item) => {
           if (item.items && item.items.length > 0) {
@@ -495,20 +509,6 @@ const SiderBar = () => {
               />
             );
           }
-        })}
-
-        <Text style={groupLabelStyle}>{t('模型')}</Text>
-        {modelItems.map((item)=>{
-           return (
-            <Nav.Item
-              key={item.itemKey}
-              itemKey={item.itemKey}
-              text={item.text}
-              icon={React.cloneElement(item.icon, {
-                style: iconStyles[item.itemKey],
-              })}
-            />
-          )
         })}
 
         {/* Divider */}
