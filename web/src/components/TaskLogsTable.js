@@ -363,7 +363,7 @@ const LogsTable = () => {
         return (
           <Label basic color='teal'>
             {' '}
-            LDX{' '}
+            Genbo{' '}
           </Label>
         );
       default:
