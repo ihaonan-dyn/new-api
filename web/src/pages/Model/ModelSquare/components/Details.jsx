@@ -285,7 +285,7 @@ const Details = forwardRef((props, ref) => {
   const experienceLinkMap = {
     对话: () => `/playground?model=${data.model}&enable_group=${JSON.stringify(data.enable_group)}`,
     生图: () => `/playground/image?model=${data.model}&enable_group=${JSON.stringify(data.enable_group)}`,
-    视频: () => `/playground/video?model=${data.model}&enable_group=${JSON.stringify(data.enable_group)}`,
+    视频: () => `/playground/video?model=${data.model}&enable_group=${JSON.stringify(data.enable_group)}&tag=${data.tags[0]}`,
   };
   const handleOnlineExperience = () => {
     const linkGetter = experienceLinkMap[data.type];

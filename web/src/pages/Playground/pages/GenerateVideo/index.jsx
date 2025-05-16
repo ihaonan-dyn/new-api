@@ -1,3 +1,4 @@
+import LoadingContent from '@/components/LoadingContent';
 import { UserContext } from '@/context/User/index';
 import { API } from '@/helpers';
 import { renderGroupOption, truncateText } from '@/helpers/render.js';
@@ -6,62 +7,92 @@ import {
   Button,
   Image,
   Select,
-  Spin,
   TextArea,
   Tooltip,
   Typography,
 } from '@douyinfe/semi-ui';
 import classNames from 'classnames';
 import { t } from 'i18next';
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useSearchParams } from 'react-router-dom';
 import TaskList from './components/TaskList';
 import PageContainer from './Styled';
-import LoadingContent from '@/components/LoadingContent';
+import TextAside from './components/Text/Aside';
+import ImageAside from './components/Image/Aside';
 
 let taskTimer = null;
 
 function GenerateVideo() {
   const [searchParams] = useSearchParams();
   const model = searchParams.get('model');
+  const tag = searchParams.get('tag');
   // 提交状态
   const [submitLoading, setSubmitLoading] = useState(false);
   const [userState] = useContext(UserContext);
-  /* 模型 */
-  const [modelOptions, setModelOptions] = useState([
-    {
-      model: 'wan2.1模型',
-      enable_group: ['default'],
-    },
-  ]);
 
-  const handleGetModelOptions = async () => {
-    const params = {
-      type: ['视频'],
-      status: 1,
-    };
-    try {
-      const {
-        data: { data, success },
-      } = await API.post('/api/model_list', params);
-      if (success && data.length) {
-        setModelOptions(data);
-        const { enable_group } = data[0];
-        if (!model) {
-          handleChangeImageInputs({
-            model: data[0].model,
-            group: enable_group[0],
-          });
-          setImageEnableGroup(enable_group);
-          handleChangeTextInputs({
-            model: data[0].model,
-            group: enable_group[0],
-          });
-          setTextEnableGroup(enable_group);
-         
+  const TypeEnum = Object.freeze({
+    text: '文生视频',
+    image: '图生视频',
+  });
+
+  const handleGetModelOptions = () => {
+    // 文生视频
+    (async () => {
+      const params = {
+        type: ['视频'],
+        tags: ['文生视频'],
+        status: 1,
+      };
+      try {
+        const {
+          data: { data, success },
+        } = await API.post('/api/model_list', params);
+        if (success && data.length) {
+          setTextModelOptions(data);
+          console.log('data', data);
+          const { enable_group } = data[0];
+          if (!model && tag !== TypeEnum.text) {
+            handleChangeTextInputs({
+              model: data[0].model,
+              group: enable_group[0],
+            });
+            console.log('enable_group', enable_group);
+            setTextEnableGroup(enable_group);
+          }
         }
-      }
-    } catch (error) {}
+      } catch (error) {}
+    })();
+    // 图生视频
+    (async () => {
+      const params = {
+        type: ['视频'],
+        tags: ['图生视频'],
+        status: 1,
+      };
+      try {
+        const {
+          data: { data, success },
+        } = await API.post('/api/model_list', params);
+        if (success && data.length) {
+          setImageModelOptions(data);
+          const { enable_group } = data[0];
+          if (!model && tag !== TypeEnum.image) {
+            handleChangeImageInputs({
+              model: data[0].model,
+              group: enable_group[0],
+            });
+            setImageEnableGroup(enable_group);
+          }
+        }
+      } catch (error) {}
+    })();
   };
 
   const sizeOptions = [
@@ -142,9 +173,10 @@ function GenerateVideo() {
     }
   };
 
+  const [textModelOptions, setTextModelOptions] = useState([]);
   /* 文生视频组件 */
   const [videoFromTextInputs, setVideoFromTextInputs] = useState({
-    model: model || 'wan2.1模型',
+    model: tag === TypeEnum.text ? model || 'wan2.1模型' : 'wan2.1模型',
     size: sizeOptions[0].value,
     group: 'default',
   });
@@ -157,7 +189,11 @@ function GenerateVideo() {
     setVideoFromTextInputs({ ...videoFromTextInputs, ...params });
   };
 
-  const [textEnableGroup,setTextEnableGroup] = useState(() => {
+  const [textEnableGroup, setTextEnableGroup] = useState(() => {
+    // 如果有 tag 但并不是文生视频
+    if (!tag || tag !== TypeEnum.text) {
+      return [];
+    }
     const params = searchParams.get('enable_group');
     const result = params ? JSON.parse(params) : [];
     if (!Array.isArray(result)) {
@@ -165,119 +201,10 @@ function GenerateVideo() {
     }
     return result;
   });
-
-  const TextGenerate = {
-    aside: () => {
-      const groupsOptions = useMemo(() => {
-        if (!groupDict || !textEnableGroup?.length) {
-          return [];
-        }
-        return textEnableGroup.map((group) => {
-          const info = groupDict[group];
-          return {
-            label: truncateText(info.desc, '50%'),
-            value: group,
-            ratio: info.ratio,
-            fullLabel: info.desc, // 保存完整文本用于tooltip
-          };
-        });
-      }, [groupDict, textEnableGroup]);
-      return (
-        <>
-          <section className='sec'>
-            <div className={'title'}>
-              <span className={'txt'}>
-                <Typography.Text strong>{t('分组')}：</Typography.Text>
-              </span>
-            </div>
-            <div className={'content'}>
-              <Select
-                placeholder={t('请选择分组')}
-                name='group'
-                required
-                selection
-                onChange={(value) => {
-                  handleChangeTextInputs({
-                    group: value,
-                  });
-                }}
-                value={videoFromTextInputs.group}
-                autoComplete='new-password'
-                optionList={groupsOptions}
-                renderOptionItem={renderGroupOption}
-                style={{ width: '100%' }}
-              />
-            </div>
-          </section>
-          <section className='sec'>
-            <div className={'title'}>
-              <span className={'txt'}>
-                <Typography.Text strong>{t('模型')}：</Typography.Text>
-              </span>
-            </div>
-            <div className={'content'}>
-              <Select
-                onChange={(value) => {
-                  handleChangeTextInputs({
-                    model: value.model,
-                    group: value.enable_group[0],
-                  });
-                  setTextEnableGroup(value.enable_group);
-                }}
-                value={videoFromTextInputs.model}
-              >
-                {modelOptions.map((item) => (
-                  <Select.Option key={item.model} value={item}>
-                    {item.model}
-                  </Select.Option>
-                ))}
-              </Select>
-            </div>
-          </section>
-          <section className='sec size'>
-            <div className='title'>
-              <span className='txt'>
-                <Typography.Text strong>{t('视频尺寸')}：</Typography.Text>
-              </span>
-              <Tooltip content={t('生成视频的长宽比。')}>
-                <IconAlertCircle />
-              </Tooltip>
-            </div>
-            <div className={'content'}>
-              <ul className='tags'>
-                {sizeOptions.map((item, index) => (
-                  <Tooltip key={index} content={item.tipText}>
-                    <li
-                      className={classNames({
-                        item: true,
-                        active: item.value === videoFromTextInputs.size,
-                      })}
-                      onClick={() => {
-                        handleChangeTextInputs({
-                          size: item.value,
-                        });
-                      }}
-                    >
-                      <div className='icon-box'>
-                        <div className='icon-wrapper'>
-                          <div className='icon' style={item.iconStyle}></div>
-                        </div>
-                      </div>
-                      <div className='label'>{item.label}</div>
-                    </li>
-                  </Tooltip>
-                ))}
-              </ul>
-            </div>
-          </section>
-        </>
-      );
-    },
-  };
-
   /* 图生视频组件 */
+  const [imageModelOptions, setImageModelOptions] = useState([]);
   const [videoFromImageInputs, setVideoFromImageInputs] = useState({
-    model: model || 'wan2.1模型',
+    model: tag === TypeEnum.image ? model || 'wan2.1模型' : 'wan2.1模型',
     prompt: '',
     img_url: '',
     group: 'default',
@@ -295,7 +222,10 @@ function GenerateVideo() {
     setVideoFromImageInputs({ ...videoFromImageInputs, ...params });
   };
 
-  const [imageEnableGroup,setImageEnableGroup] = useState(() => {
+  const [imageEnableGroup, setImageEnableGroup] = useState(() => {
+    if (!tag || tag !== TypeEnum.text) {
+      return [];
+    }
     const params = searchParams.get('enable_group');
     const result = params ? JSON.parse(params) : [];
     if (!Array.isArray(result)) {
@@ -305,139 +235,13 @@ function GenerateVideo() {
   });
 
   /* 任务结果 */
-  const ImageGenerate = {
-    aside: () => {
-      const groupsOptions = useMemo(() => {
-        if (!groupDict || !imageEnableGroup?.length) {
-          return [];
-        }
-        return imageEnableGroup.map((group) => {
-          const info = groupDict[group];
-          return {
-            label: truncateText(info.desc, '50%'),
-            value: group,
-            ratio: info.ratio,
-            fullLabel: info.desc, // 保存完整文本用于tooltip
-          };
-        });
-      }, [groupDict, imageEnableGroup]);
-      const [loading, setLoading] = useState(false);
-      const handleFileChange = async (event) => {
-        if (loading) return;
-        const input = event.target;
-        if (!input.files || input.files.length === 0) return;
-        const file = input.files[0];
-        setLoading(true);
-        try {
-          const formData = new FormData();
-          formData.append('images', file);
-          const {
-            data: { data },
-          } = await API.post('/pg/upload/image', formData);
-          handleChangeImageInputs({ img_url: data.full_url });
-        } catch (error) {}
-        setLoading(false);
-      };
-      return (
-        <>
-          <section className='sec'>
-            <div className={'title'}>
-              <span className={'txt'}>
-                <Typography.Text strong>{t('分组')}：</Typography.Text>
-              </span>
-            </div>
-            <div className={'content'}>
-              <Select
-                placeholder={t('请选择分组')}
-                name='group'
-                required
-                selection
-                onChange={(value) => {
-                  handleChangeImageInputs({
-                    group: value,
-                  });
-                }}
-                value={videoFromImageInputs.group}
-                autoComplete='new-password'
-                optionList={groupsOptions}
-                renderOptionItem={renderGroupOption}
-                style={{ width: '100%' }}
-              />
-            </div>
-          </section>
-          <section className='sec'>
-            <div className={'title'}>
-              <span className={'txt'}>
-                <Typography.Text strong>{t('模型')}：</Typography.Text>
-              </span>
-            </div>
-            <div className={'content'}>
-              <Select
-                onChange={(value) => {
-                  handleChangeImageInputs({
-                    model: value.model,
-                    group: value.enable_group[0],
-                  });
-                  setImageEnableGroup(value.enable_group);
-                }}
-                value={videoFromImageInputs.model}
-              >
-                {modelOptions.map((item) => (
-                  <Select.Option key={item.model} value={item}>
-                    {item.model}
-                  </Select.Option>
-                ))}
-              </Select>
-            </div>
-          </section>
-          <section className='sec required upload-image'>
-            <div className={'title'}>
-              <span className={'txt'}>
-                <Typography.Text strong>{t('上传图片')}：</Typography.Text>
-              </span>
-            </div>
-            <div className={'content'}>
-              <Button className='trigger-btn' loading={loading}>
-                {t('添加图片')}
-                <input
-                  className='file-input'
-                  type='file'
-                  accept='image/jpeg, image/png, image/jpg'
-                  onChange={handleFileChange}
-                />
-              </Button>
-              {videoFromImageInputs.img_url && (
-                <div className='preview'>
-                  <Image src={videoFromImageInputs.img_url} />
-                </div>
-              )}
-            </div>
-          </section>
-        </>
-      );
-    },
-  };
-
-  const TypeEnum = Object.freeze({
-    text: 'text',
-    image: 'image',
-  });
-
-  const ComponentTypeMap = {
-    [TypeEnum.text]: TextGenerate,
-    [TypeEnum.image]: ImageGenerate,
-  };
 
   const typeOptions = [
     { label: t('文本'), value: TypeEnum.text },
     { label: t('图片'), value: TypeEnum.image },
   ];
 
-  const [type, setType] = useState(TypeEnum.text);
-  // 最终渲染组件
-  const FinallyRenderElem = useMemo(() => {
-    return ComponentTypeMap[type];
-  });
+  const [type, setType] = useState(tag || TypeEnum.text);
   /* 任务处理 */
   const taskListRef = useRef(null);
   const [taskInfo, setTaskInfo] = useState({
@@ -491,6 +295,7 @@ function GenerateVideo() {
           ...videoFromImageInputs,
           prompt,
         });
+        taskInfo.task_id = data.task_id;
         handleChangeTaskInfo({
           task_id: data.task_id,
         });
@@ -595,7 +400,25 @@ function GenerateVideo() {
             </li>
           ))}
         </ul>
-        <FinallyRenderElem.aside />
+        {type === TypeEnum.text ? (
+          <TextAside
+            modelOptions={textModelOptions}
+            enableGroup={textEnableGroup}
+            handleChangeInputs={handleChangeTextInputs}
+            inputVaue={videoFromTextInputs}
+            groupDict={groupDict}
+            setEnableGroup={setTextEnableGroup}
+          />
+        ) : (
+          <ImageAside
+            modelOptions={imageModelOptions}
+            enableGroup={imageEnableGroup}
+            handleChangInputs={handleChangeImageInputs}
+            inputVaue={videoFromImageInputs}
+            groupDict={groupDict}
+            setEnableGroup={setImageEnableGroup}
+          />
+        )}
       </aside>
       <main className='container'>
         <div className='preview-container'>
