@@ -268,7 +268,7 @@ const SiderBar = () => {
   const chatMenuItems = useMemo(
     () => [
       {
-        text: 'Playground',
+        text: t('体验中心'),
         itemKey: 'playground',
         items: [
           {
@@ -475,7 +475,9 @@ const SiderBar = () => {
             />
           );
         })}
-
+        {/* Divider */}
+        <Divider style={dividerStyle} />
+        <Text style={groupLabelStyle}>{t('体验中心')}</Text>
         {/* Chat Section - Only show if there are chat items */}
         {chatMenuItems.map((item) => {
           if (item.items && item.items.length > 0) {
