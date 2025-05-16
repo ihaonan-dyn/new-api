@@ -37,9 +37,10 @@ func SetupApiRequestHeader(info *common.RelayInfo, c *gin.Context, req *http.Hea
 
 func DoApiRequest(a Adaptor, c *gin.Context, info *common.RelayInfo, requestBody io.Reader) (*http.Response, error) {
 	fullRequestURL := info.BaseUrl + c.Request.URL.Path
-	if fullRequestURL == "" {
+	if c.Request.URL.Path != "/survival_queue" {
 		var err error
 		fullRequestURL, err = a.GetRequestURL(info)
+
 		if err != nil {
 			return nil, fmt.Errorf("get request url failed: %w", err)
 		}
