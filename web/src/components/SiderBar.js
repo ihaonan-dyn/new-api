@@ -268,7 +268,7 @@ const SiderBar = () => {
   const chatMenuItems = useMemo(
     () => [
       {
-        text: 'Playground',
+        text: t('体验中心'),
         itemKey: 'playground',
         items: [
           {
@@ -462,6 +462,22 @@ const SiderBar = () => {
           setOpenedKeys(data.openKeys);
         }}
       >
+        <Text style={groupLabelStyle}>{t('模型')}</Text>
+        {modelItems.map((item) => {
+          return (
+            <Nav.Item
+              key={item.itemKey}
+              itemKey={item.itemKey}
+              text={item.text}
+              icon={React.cloneElement(item.icon, {
+                style: iconStyles[item.itemKey],
+              })}
+            />
+          );
+        })}
+        {/* Divider */}
+        <Divider style={dividerStyle} />
+        <Text style={groupLabelStyle}>{t('体验中心')}</Text>
         {/* Chat Section - Only show if there are chat items */}
         {chatMenuItems.map((item) => {
           if (item.items && item.items.length > 0) {
@@ -495,20 +511,6 @@ const SiderBar = () => {
               />
             );
           }
-        })}
-
-        <Text style={groupLabelStyle}>{t('模型')}</Text>
-        {modelItems.map((item)=>{
-           return (
-            <Nav.Item
-              key={item.itemKey}
-              itemKey={item.itemKey}
-              text={item.text}
-              icon={React.cloneElement(item.icon, {
-                style: iconStyles[item.itemKey],
-              })}
-            />
-          )
         })}
 
         {/* Divider */}

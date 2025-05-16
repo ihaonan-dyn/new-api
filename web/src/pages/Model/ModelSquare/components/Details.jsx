@@ -294,9 +294,9 @@ const Details = forwardRef((props, ref) => {
 
   // 跳转到API文档
   const apiLinkMap = {
-    对话: () => `https://liandanxia-api.apifox.cn/290396775e0`,
-    生图: () => `https://liandanxia-api.apifox.cn/290396780e0`,
-    视频: () => `https://liandanxia-api.apifox.cn/290396776e0`,
+    对话: () => `https://genbo.apifox.cn/282697338e0`,
+    生图: () => `https://genbo.apifox.cn/285551990e0`,
+    视频: () => `https://genbo.apifox.cn/285528556e0`,
   };
   const handleGoApiDoc = () => {
     const linkGetter = apiLinkMap[data.type];
@@ -390,10 +390,10 @@ const Details = forwardRef((props, ref) => {
                 <div className='value'>{renderPriceDesc()}</div>
               </div>
             )}
-            <div className='info-item'>
+            {data.context && <div className='info-item'>
               <div className='label'>{t('上下文')}</div>
-              <div className='value'>128K</div>
-            </div>
+              <div className='value'>{data.context}</div>
+            </div>}
             <div className='info-item'>
               <div className='label'>{t('发布日期')}</div>
               <div className='value'>{data.publish_time}</div>
