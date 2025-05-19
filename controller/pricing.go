@@ -89,6 +89,9 @@ func GetModels(c *gin.Context) {
 			Description:   m.Description,
 			PublishTime:   m.PublishTime.Format("2006-01-02"),
 			Status:        m.Status,
+			TypeEn:        m.TypeEn,
+			TagsEn:        strings.Split(m.TagsEn, ","),
+			DescriptionEn: m.DescriptionEn,
 		}
 		if m.Context != 0 {
 			modelDetail.Context = fmt.Sprintf("%vK", m.Context)
