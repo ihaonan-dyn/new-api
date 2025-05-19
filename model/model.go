@@ -8,41 +8,48 @@ import (
 
 // Model 模型表
 type Model struct {
-	Model         string    `json:"model" gorm:"model"`                 // 模型
-	Icon          string    `json:"icon" gorm:"icon"`                   // 图标地址
-	Type          string    `json:"type" gorm:"type"`                   // 类型
-	Tags          string    `json:"tags" gorm:"tags"`                   // 标签
-	Manufacturer  string    `json:"manufacturer" gorm:"manufacturer"`   // 系列/厂商
-	PriceType     int       `json:"price_type" gorm:"price_type"`       // 价格类型 1-免费 2-计费
-	Context       int64     `json:"context" gorm:"context"`             // 上下文 单位K
-	Specification string    `json:"specification" gorm:"specification"` // 规格 单位B（如果是MoE则记为MoE-xxB）
-	PublishTime   time.Time `json:"publish_time" gorm:"publish_time"`   // 发布日期
-	Description   string    `json:"description" gorm:"description"`     // 简介
-	Status        int       `json:"status" gorm:"status"`               // 状态 1-可用 2-禁用
+	Model         string    `json:"model" gorm:"model"`                   // 模型
+	Icon          string    `json:"icon" gorm:"icon"`                     // 图标地址
+	Type          string    `json:"type" gorm:"type"`                     // 类型
+	Tags          string    `json:"tags" gorm:"tags"`                     // 标签
+	Manufacturer  string    `json:"manufacturer" gorm:"manufacturer"`     // 系列/厂商
+	PriceType     int       `json:"price_type" gorm:"price_type"`         // 价格类型 1-免费 2-计费
+	Context       int64     `json:"context" gorm:"context"`               // 上下文 单位K
+	Specification string    `json:"specification" gorm:"specification"`   // 规格 单位B（如果是MoE则记为MoE-xxB）
+	PublishTime   time.Time `json:"publish_time" gorm:"publish_time"`     // 发布日期
+	Description   string    `json:"description" gorm:"description"`       // 简介
+	Status        int       `json:"status" gorm:"status"`                 // 状态 1-可用 2-禁用
+	TypeEn        string    `json:"type_en" gorm:"type_en"`               // 类型-英文
+	TagsEn        string    `json:"tags_en" gorm:"tags_en"`               // 标签-英文
+	DescriptionEn string    `json:"description_en" gorm:"description_en"` // 简介-英文
 }
 
 // 模型广场
 type ModelDetail struct {
-	Model           string   `json:"model" gorm:"model"`                 // 模型
-	Icon            string   `json:"icon" gorm:"icon"`                   // 图标地址
-	Manufacturer    string   `json:"manufacturer" gorm:"manufacturer"`   // 系列/厂商
-	PriceType       int      `json:"price_type" gorm:"price_type"`       // 价格类型 1-免费 2-计费
-	QuotaType       int      `json:"quota_type"`                         //0-按量计费 1-按次计费
-	EnableGroup     []string `json:"enable_group"`                       //模型可用分组
-	ModelRatio      float64  `json:"model_ratio"`                        //模型倍率 提示token定价=模型倍率*2*分组倍率（/M Tokens）
-	CompletionRatio float64  `json:"completion_ratio"`                   //补全倍率 补全token定价=补全倍率*提示token定价（/M Tokens）
-	ModelPrice      float64  `json:"model_price"`                        //单次价格 单价=单次价格*分组倍率（/次）
-	Type            string   `json:"type" gorm:"type"`                   // 类型
-	Tags            []string `json:"tags" gorm:"tags"`                   // 标签 支持能力
-	Context         string   `json:"context" gorm:"context"`             // 上下文
-	Specification   []string `json:"specification" gorm:"specification"` // 规格
-	Description     string   `json:"description" gorm:"description"`     // 简介
-	PublishTime     string   `json:"publish_time" gorm:"publish_time"`   // 发布日期
-	Status          int      `json:"status" gorm:"status"`               // 状态 1-可用 2-禁用
+	Model           string   `json:"model" gorm:"model"`                   // 模型
+	Icon            string   `json:"icon" gorm:"icon"`                     // 图标地址
+	Manufacturer    string   `json:"manufacturer" gorm:"manufacturer"`     // 系列/厂商
+	PriceType       int      `json:"price_type" gorm:"price_type"`         // 价格类型 1-免费 2-计费
+	QuotaType       int      `json:"quota_type"`                           //0-按量计费 1-按次计费
+	EnableGroup     []string `json:"enable_group"`                         //模型可用分组
+	ModelRatio      float64  `json:"model_ratio"`                          //模型倍率 提示token定价=模型倍率*2*分组倍率（/M Tokens）
+	CompletionRatio float64  `json:"completion_ratio"`                     //补全倍率 补全token定价=补全倍率*提示token定价（/M Tokens）
+	ModelPrice      float64  `json:"model_price"`                          //单次价格 单价=单次价格*分组倍率（/次）
+	Type            string   `json:"type" gorm:"type"`                     // 类型
+	Tags            []string `json:"tags" gorm:"tags"`                     // 标签 支持能力
+	Context         string   `json:"context" gorm:"context"`               // 上下文
+	Specification   []string `json:"specification" gorm:"specification"`   // 规格
+	Description     string   `json:"description" gorm:"description"`       // 简介
+	PublishTime     string   `json:"publish_time" gorm:"publish_time"`     // 发布日期
+	Status          int      `json:"status" gorm:"status"`                 // 状态 1-可用 2-禁用
+	TypeEn          string   `json:"type_en" gorm:"type_en"`               // 类型-英文
+	TagsEn          []string `json:"tags_en" gorm:"tags_en"`               // 标签-英文
+	DescriptionEn   string   `json:"description_en" gorm:"description_en"` // 简介-英文
 }
 
 // ModelsQueryParams 用于包含所有搜索条件的结构体，可以根据需求添加更多字段
 type ModelsQueryParams struct {
+	English       bool     `json:"english"`       //是否使用英文搜索 true-英文 false-中文
 	Model         string   `json:"model"`         //模型关键字
 	Type          []string `json:"type"`          // 类型
 	Tags          []string `json:"tags"`          // 标签
@@ -62,13 +69,22 @@ func GetModels(queryParams ModelsQueryParams) ([]*Model, error) {
 		query = query.Where("model Like ?", "%"+queryParams.Model+"%")
 	}
 	if len(queryParams.Type) > 0 {
-		query = query.Where("type IN ?", queryParams.Type)
+		if queryParams.English {
+			query = query.Where("type_en IN ?", queryParams.Type)
+		} else {
+			query = query.Where("type IN ?", queryParams.Type)
+		}
 	}
 	if len(queryParams.Tags) > 0 {
+		queryFiled := "tags"
+		if queryParams.English {
+			queryFiled = "tags_en"
+		}
+
 		var conditions []string
 		for _, tag := range queryParams.Tags {
 			// 查找格式为：以,开头，后跟tag并以,或字符串结尾
-			pattern := fmt.Sprintf("CONCAT(',', tags, ',') LIKE '%%,%s,%%'", tag)
+			pattern := fmt.Sprintf("CONCAT(',', %s, ',') LIKE '%%,%s,%%'", queryFiled, tag)
 			conditions = append(conditions, pattern)
 		}
 		query = query.Where(strings.Join(conditions, " OR "))
@@ -133,6 +149,8 @@ type (
 		Types              []string            `json:"types"`
 		Tags               []string            `json:"tags"`
 		ModelManufacturers []ModelManufacturer `json:"modelManufacturers"`
+		TypesEn            []string            `json:"types_en"`
+		TagsEn             []string            `json:"tags_en"`
 	}
 	ModelManufacturer struct {
 		Icon         string `json:"icon" gorm:"icon"`                 // 图标地址
@@ -143,6 +161,7 @@ type (
 // 获取模型类型，标签，厂商
 func GetModelFilters() (modelFilters ModelFilters) {
 	DB.Table("models").Distinct("type").Pluck("type", &modelFilters.Types)
+	DB.Table("models").Distinct("type_en").Pluck("type_en", &modelFilters.TypesEn)
 
 	var tags []string
 	// Find distinct models
@@ -156,6 +175,19 @@ func GetModelFilters() (modelFilters ModelFilters) {
 	}
 	for key, _ := range tagMap {
 		modelFilters.Tags = append(modelFilters.Tags, key)
+	}
+
+	var tagsEn []string
+	DB.Table("models").Distinct("tags_en").Pluck("tags_en", &tagsEn)
+	tagEnMap := make(map[string]struct{}, 0)
+	for _, tag := range tagsEn {
+		tagArr := strings.Split(tag, ",")
+		for _, s := range tagArr {
+			tagEnMap[s] = struct{}{}
+		}
+	}
+	for key, _ := range tagEnMap {
+		modelFilters.TagsEn = append(modelFilters.TagsEn, key)
 	}
 
 	DB.Table("models").Select("DISTINCT(manufacturer), icon").Find(&modelFilters.ModelManufacturers)
