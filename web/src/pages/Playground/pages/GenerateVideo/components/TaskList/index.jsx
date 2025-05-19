@@ -201,11 +201,11 @@ const TaskList = forwardRef((params, ref) => {
         });
       }
       // 初始化赋值
-      // if(isFirst.current){
-      //   isFirst.current = false;
-      //   handleChangeTask(data[0]);
-      //   !params.task_id && data.length > 0 && handleChangeTask(data[0]);
-      // }
+      if(isFirst.current && !location.search){
+        isFirst.current = false;
+        handleChangeTask(data[0]);
+        !params.task_id && data.length > 0 && handleChangeTask(data[0]);
+      }
     } catch (error) {}
     isLoading.current = false;
   };
