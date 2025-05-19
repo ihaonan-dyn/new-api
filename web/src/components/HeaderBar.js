@@ -114,7 +114,7 @@ const HeaderBar = () => {
   const [styleState, styleDispatch] = useContext(StyleContext);
   const [statusState, statusDispatch] = useContext(StatusContext);
   let navigate = useNavigate();
-  const [currentLang, setCurrentLang] = useState('zh');
+  const [currentLang, setCurrentLang] = useState(i18n.language);
 
   const systemName = getSystemName();
   const logo = getLogo();
@@ -210,7 +210,8 @@ const HeaderBar = () => {
 
   useEffect(() => {
     const handleLanguageChanged = (lng) => {
-      setCurrentLang(lng);
+      const normalizedLang = lng.startsWith('zh') ? 'zh' : lng;
+      setCurrentLang(normalizedLang);
       const iframe = document.querySelector('iframe');
       if (iframe) {
         iframe.contentWindow.postMessage({ lang: lng }, '*');
