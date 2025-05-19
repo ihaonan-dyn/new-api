@@ -646,7 +646,7 @@ export function modelToColor(modelName) {
 
 export function stringToColor(str) {
   let sum = 0;
-  for (let i = 0; i < str.length; i++) {
+  for (let i = 0; i < str?.length; i++) {
     sum += str.charCodeAt(i);
   }
   let i = sum % colors.length;

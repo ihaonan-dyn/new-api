@@ -56,14 +56,12 @@ function GenerateVideo() {
         } = await API.post('/api/model_list', params);
         if (success && data.length) {
           setTextModelOptions(data);
-          console.log('data', data);
           const { enable_group } = data[0];
           if (!model && tag !== TypeEnum.text) {
             handleChangeTextInputs({
               model: data[0].model,
               group: enable_group[0],
             });
-            console.log('enable_group', enable_group);
             setTextEnableGroup(enable_group);
           }
         }

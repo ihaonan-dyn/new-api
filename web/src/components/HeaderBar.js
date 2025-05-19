@@ -402,7 +402,7 @@ const HeaderBar = () => {
                         color={stringToColor(userState.user.username)}
                         style={avatarStyle}
                       >
-                        {userState.user.username[0]}
+                        {userState?.user?.username?.length && userState.user?.username[0]}
                       </Avatar>
                       {styleState.isMobile?null:<Text style={{ marginLeft: '4px', fontWeight: '500' }}>{userState.user.username}</Text>}
                     </Dropdown>

@@ -95,7 +95,7 @@ const PersonalSetting = () => {
             }
         }
         getUserData().then((res) => {
-            console.log(userState);
+            // console.log(userState);
         });
         loadModels().then();
         getAffLink().then();
