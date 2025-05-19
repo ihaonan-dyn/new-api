@@ -247,9 +247,9 @@ const Detail = (props) => {
     // 收集所有唯一的模型名称
     data.forEach(item => {
       uniqueModels.add(item.model_name);
-      totalTokens += item.token_used;
-      totalQuota += item.quota;
-      totalTimes += item.count;
+      totalTokens += item.token_used || 0;
+      totalQuota += item.quota || 0;
+      totalTimes += item.count || 0;
     });
 
     // 处理颜色映射

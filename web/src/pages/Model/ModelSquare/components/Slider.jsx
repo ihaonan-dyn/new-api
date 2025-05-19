@@ -2,10 +2,11 @@ import { IconChevronDown } from '@douyinfe/semi-icons';
 import classNames from 'classnames';
 // import { t,i18n } from 'i18next';
 import { API } from '@/helpers';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import styled from 'styled-components';
 import LoadingContent from '@/components/LoadingContent';
+import { Tooltip } from '@douyinfe/semi-ui';
 
 // 侧边栏容器
 const SidebarContainer = styled.div`
@@ -209,13 +210,23 @@ const Sidebar = (props) => {
 
   //  类型
   //   const [typeOptions, setTypeOptions] = useState(TempArr);
+  const mapTypeOptions = {
+    zh: 'types',
+    en: 'types_en',
+  };
   const typeOptions = useMemo(() => {
-    return openSections.type ? options.types : options.types.slice(0, 2);
-  }, [options.types, openSections.type]);
+    const res = options[mapTypeOptions[i18n.language]];
+    return openSections.type ? res : res.slice(0, 2);
+  }, [options.types, openSections.type, i18n.language]);
   //   标签
+  const mapTagOptions = {
+    zh: 'tags',
+    en: 'tags_en',
+  };
   const tagOptions = useMemo(() => {
-    return openSections.tag ? options.tags : options.tags.slice(0, 2);
-  }, [options.tags, openSections.tag]);
+    const res = options[mapTagOptions[i18n.language]];
+    return openSections.tag ? res : res.slice(0, 2);
+  }, [options.tags, openSections.tag, i18n.language]);
   //   系列/厂商
   const seriesOptions = useMemo(() => {
     return openSections.series
@@ -256,17 +267,18 @@ const Sidebar = (props) => {
             </Title>
             <OptionContainer>
               {typeOptions.map((item) => (
-                <TagButton
-                  key={item}
-                  className={classNames({
-                    active: inputValue.type.includes(item),
-                  })}
-                  onClick={() => {
-                    handleArrInputVal('type', item);
-                  }}
-                >
-                  <span className='txt'> {item}</span>
-                </TagButton>
+                <Tooltip content={<>{item}</>} position='top' key={item}>
+                  <TagButton
+                    className={classNames({
+                      active: inputValue.type.includes(item),
+                    })}
+                    onClick={() => {
+                      handleArrInputVal('type', item);
+                    }}
+                  >
+                    <span className='txt'> {item}</span>
+                  </TagButton>
+                </Tooltip>
               ))}
             </OptionContainer>
           </section>
@@ -280,17 +292,18 @@ const Sidebar = (props) => {
             </Title>
             <OptionContainer>
               {tagOptions.map((item) => (
-                <TagButton
-                  key={item}
-                  className={classNames({
-                    active: inputValue.tags.includes(item),
-                  })}
-                  onClick={() => {
-                    handleArrInputVal('tags', item);
-                  }}
-                >
-                  <span className='txt'>{item}</span>
-                </TagButton>
+                <Tooltip content={<>{item}</>} position='top' key={item}>
+                  <TagButton
+                    className={classNames({
+                      active: inputValue.tags.includes(item),
+                    })}
+                    onClick={() => {
+                      handleArrInputVal('tags', item);
+                    }}
+                  >
+                    <span className='txt'>{item}</span>
+                  </TagButton>
+                </Tooltip>
               ))}
             </OptionContainer>
           </section>
@@ -304,18 +317,21 @@ const Sidebar = (props) => {
             </Title>
             <OptionContainer>
               {seriesOptions.map((item) => (
-                <TagButton
-                  key={item.manufacturer}
-                  className={classNames({
-                    active: inputValue.manufacturer.includes(item.manufacturer),
-                  })}
-                  onClick={() => {
-                    handleArrInputVal('manufacturer', item.manufacturer);
-                  }}
-                >
-                  <img className='prefix-icon' src={item.icon} alt='' />
-                  <span className='txt'>{item.manufacturer}</span>
-                </TagButton>
+                <Tooltip content={<>{item.manufacturer}</>} position="top" key={item.manufacturer}>
+                  <TagButton
+                    className={classNames({
+                      active: inputValue.manufacturer.includes(
+                        item.manufacturer,
+                      ),
+                    })}
+                    onClick={() => {
+                      handleArrInputVal('manufacturer', item.manufacturer);
+                    }}
+                  >
+                    <img className='prefix-icon' src={item.icon} alt='' />
+                    <span className='txt'>{item.manufacturer}</span>
+                  </TagButton>
+                </Tooltip>
               ))}
             </OptionContainer>
           </section>
@@ -328,17 +344,18 @@ const Sidebar = (props) => {
             </Title>
             <OptionContainer>
               {pricesOptions.map((item) => (
-                <TagButton
-                  key={item.value}
-                  className={classNames({
-                    active: inputValue.price_type.includes(item.value),
-                  })}
-                  onClick={() => {
-                    handleArrInputVal('price_type', item.value);
-                  }}
-                >
-                  <span className='txt'>{item.name}</span>
-                </TagButton>
+                <Tooltip content={<>{item.name}</>} position='top' key={item.value}>
+                  <TagButton
+                    className={classNames({
+                      active: inputValue.price_type.includes(item.value),
+                    })}
+                    onClick={() => {
+                      handleArrInputVal('price_type', item.value);
+                    }}
+                  >
+                    <span className='txt'>{item.name}</span>
+                  </TagButton>
+                </Tooltip>
               ))}
             </OptionContainer>
           </section>
@@ -351,17 +368,18 @@ const Sidebar = (props) => {
             </Title>
             <OptionContainer>
               {contextsOptions.map((item) => (
-                <TagButton
-                  key={item.value}
-                  className={classNames({
-                    active: inputValue.context === item.value,
-                  })}
-                  onClick={() => {
-                    handleBasicInputVal('context', item.value);
-                  }}
-                >
-                  <span className='txt'> {item.name}</span>
-                </TagButton>
+                <Tooltip content={<>{item.name}</>} position='top' key={item.value}>
+                  <TagButton
+                    className={classNames({
+                      active: inputValue.context === item.value,
+                    })}
+                    onClick={() => {
+                      handleBasicInputVal('context', item.value);
+                    }}
+                  >
+                    <span className='txt'> {item.name}</span>
+                  </TagButton>
+                </Tooltip>
               ))}
             </OptionContainer>
           </section>
@@ -375,17 +393,18 @@ const Sidebar = (props) => {
             </Title>
             <OptionContainer>
               {specsOptions.map((item) => (
-                <TagButton
-                  key={item.value}
-                  className={classNames({
-                    active: inputValue.specification === item.value,
-                  })}
-                  onClick={() => {
-                    handleBasicInputVal('specification', item.value);
-                  }}
-                >
-                  <span className='txt'>{item.name}</span>
-                </TagButton>
+                <Tooltip content={<>{item.name}</>} position='top' key={item.value}>
+                  <TagButton
+                    className={classNames({
+                      active: inputValue.specification === item.value,
+                    })}
+                    onClick={() => {
+                      handleBasicInputVal('specification', item.value);
+                    }}
+                  >
+                    <span className='txt'>{item.name}</span>
+                  </TagButton>
+                </Tooltip>
               ))}
             </OptionContainer>
           </section>
@@ -399,17 +418,18 @@ const Sidebar = (props) => {
             </Title>
             <OptionContainer>
               {releaseDateOptions.map((item) => (
-                <TagButton
-                  key={item.value}
-                  className={classNames({
-                    active: inputValue.publish_time === item.value,
-                  })}
-                  onClick={() => {
-                    handleBasicInputVal('publish_time', item.value);
-                  }}
-                >
-                  <span className='txt'>{item.name}</span>
-                </TagButton>
+                <Tooltip content={<>{item.name}</>} position='top' key={item.value}>
+                  <TagButton
+                    className={classNames({
+                      active: inputValue.publish_time === item.value,
+                    })}
+                    onClick={() => {
+                      handleBasicInputVal('publish_time', item.value);
+                    }}
+                  >
+                    <span className='txt'>{item.name}</span>
+                  </TagButton>
+                </Tooltip>
               ))}
             </OptionContainer>
           </section>
@@ -419,4 +439,4 @@ const Sidebar = (props) => {
   );
 };
 
-export default Sidebar;
+export default memo(Sidebar);

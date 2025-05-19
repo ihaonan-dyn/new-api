@@ -1,17 +1,16 @@
 import LoadingContent from '@/components/LoadingContent';
+import { UserContext } from '@/context/User/index.js';
 import { API } from '@/helpers';
 import { IconSearch, IconSidebar } from '@douyinfe/semi-icons';
 import { Input } from '@douyinfe/semi-ui';
-import { t } from 'i18next';
+import classNames from 'classnames';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { debounce } from 'yd-web-utils'; //引入插件
-import Sidebar from './components/Slider';
-import Text from '@douyinfe/semi-ui/lib/es/typography/text';
-import { UserContext } from '@/context/User/index.js';
 import Details from './components/Details';
-import classNames from 'classnames';
-import { useSearchParams } from 'react-router-dom';
+import Sidebar from './components/Slider';
+import { useTranslation } from 'react-i18next';
 const PageContainer = styled.div`
   flex: 1;
   display: flex;
@@ -205,6 +204,7 @@ const PageContainer = styled.div`
 `;
 
 const ModelSquare = () => {
+  const { t, i18n } = useTranslation();
   const isFirst = useRef(true);
   const [searchParams] = useSearchParams();
   const [isHideSlider, setIsHideSlider] = useState(false);
@@ -254,21 +254,19 @@ const ModelSquare = () => {
             {t('提示')}
             {' $ '}
             <span className='bold-txt'>{inputRatioPrice}</span> {' /  M tokens'}
-            
           </div>
           <div className='item'>
             {t('补全')} {' $ '}{' '}
             <span className='bold-txt'>{completionRatioPrice} </span>
             {' / M tokens'}
-            
           </div>
         </div>
       );
     }
 
     const mapUnit = {
-      '生图': ' / Image',
-      '视频': ' / Video',
+      生图: ' / Image',
+      视频: ' / Video',
     };
     // 按次收费
     let price = record.model_price * groupRatio[selectedGroup];
@@ -356,6 +354,25 @@ const ModelSquare = () => {
   /* 获取详情页数据 */
   const detailRef = useRef();
 
+  /* 切换语言 */
+  const mapFieldName = {
+    zh: {
+      type: 'type',
+      tags: 'tags',
+      description: 'description',
+    },
+    en: {
+      type: 'type_en',
+      tags: 'tags_en',
+      description: 'description_en',
+    },
+  };
+
+  const handleMapFieldValue = (item, field) => {
+    const key = mapFieldName[i18n.language][field];
+    return item[key];
+  };
+
   return (
     <PageContainer>
       <Sidebar
@@ -421,12 +438,12 @@ const ModelSquare = () => {
                     </div>
                   </div>
                   {renderPriceDesc(item)}
-                  <p className='model-description'>{item.description}</p>
+                  <p className='model-description'>{handleMapFieldValue(item,'description')}</p>
                   <div className='tag-container'>
                     {/* 类型 */}
-                    <div className='tag'>{item.type}</div>
+                    <div className='tag'>{handleMapFieldValue(item,'type')}</div>
                     {/* 标签 */}
-                    {item.tags.map((tag) => (
+                    {handleMapFieldValue(item,'tags').map((tag) => (
                       <div className='tag' key={tag}>
                         {tag}
                       </div>

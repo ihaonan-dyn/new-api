@@ -56,6 +56,11 @@ export default defineConfig({
         },
       },
     },
+    terserOptions: {
+      compress: {
+        pure_funcs: ['console.log']
+      },
+    }
   },
   server: {
     host: '0.0.0.0',

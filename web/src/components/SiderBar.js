@@ -388,6 +388,15 @@ const SiderBar = () => {
     letterSpacing: '0.5px',
   };
 
+  // 切换菜单
+  const navigate = useNavigate();
+  const handleSwitchMenu = (path) => {
+    if(!path) {
+      return
+    };
+    navigate(path);
+  };
+
   return (
     <>
       <Nav
@@ -435,12 +444,14 @@ const SiderBar = () => {
         selectedStyle={navItemSelectedStyle}
         renderWrapper={({ itemElement, isSubNav, isInSubNav, props }) => {
           return (
-            <Link
+            <div
               style={{ textDecoration: 'none' }}
-              to={routerMapState[props.itemKey] || routerMap[props.itemKey]}
+             onClick={()=>{
+              handleSwitchMenu(routerMapState[props.itemKey] || routerMap[props.itemKey]);
+             }}
             >
               {itemElement}
-            </Link>
+            </div>
           );
         }}
         onSelect={(key) => {

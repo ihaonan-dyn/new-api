@@ -6,6 +6,7 @@ import { t } from 'i18next';
 import React, { forwardRef, useImperativeHandle, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const DetailsContainer = styled.div`
   height: 100%;
@@ -190,6 +191,7 @@ const DetailsContainer = styled.div`
 const Details = forwardRef((props, ref) => {
   const { groupRatio, selectedGroup } = props;
   const [data, setData] = useState({});
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
   const renderPriceDesc = () => {
@@ -303,6 +305,25 @@ const Details = forwardRef((props, ref) => {
     linkGetter && window.open(linkGetter());
   };
 
+    /* 切换语言 */
+    const mapFieldName = {
+      zh: {
+        type: 'type',
+        tags: 'tags',
+        description: 'description',
+      },
+      en: {
+        type: 'type_en',
+        tags: 'tags_en',
+        description: 'description_en',
+      },
+    };
+  
+    const handleMapFieldValue = ( field) => {
+      const key = mapFieldName[i18n.language][field];
+      return data[key];
+    };
+
   return (
     <SideSheet
       title={null}
@@ -355,14 +376,14 @@ const Details = forwardRef((props, ref) => {
                 >
                   {isPackUp ? '展开' : '收起'}
                 </span>
-                {data.description}
+                {handleMapFieldValue('description')}
               </div>
             </div>
             <div className='tag-list'>
               {/* 类型 */}
-              <div className='tag'>{data.type}</div>
+              <div className='tag'>{handleMapFieldValue('type')}</div>
               {/* 标签 */}
-              {data?.tags?.map((tag) => (
+              {handleMapFieldValue('tags')?.map((tag) => (
                 <div className='tag' key={tag}>
                   {tag}
                 </div>
