@@ -266,7 +266,7 @@ const Sidebar = (props) => {
               />
             </Title>
             <OptionContainer>
-              {typeOptions.map((item) => (
+              {typeOptions?.map((item) => (
                 <Tooltip content={<>{item}</>} position='top' key={item}>
                   <TagButton
                     className={classNames({
@@ -291,7 +291,7 @@ const Sidebar = (props) => {
               />
             </Title>
             <OptionContainer>
-              {tagOptions.map((item) => (
+              {tagOptions?.map((item) => (
                 <Tooltip content={<>{item}</>} position='top' key={item}>
                   <TagButton
                     className={classNames({
@@ -316,7 +316,7 @@ const Sidebar = (props) => {
               />
             </Title>
             <OptionContainer>
-              {seriesOptions.map((item) => (
+              {seriesOptions?.map((item) => (
                 <Tooltip content={<>{item.manufacturer}</>} position="top" key={item.manufacturer}>
                   <TagButton
                     className={classNames({
@@ -343,7 +343,7 @@ const Sidebar = (props) => {
           /> */}
             </Title>
             <OptionContainer>
-              {pricesOptions.map((item) => (
+              {pricesOptions?.map((item) => (
                 <Tooltip content={<>{item.name}</>} position='top' key={item.value}>
                   <TagButton
                     className={classNames({
@@ -367,7 +367,7 @@ const Sidebar = (props) => {
           /> */}
             </Title>
             <OptionContainer>
-              {contextsOptions.map((item) => (
+              {contextsOptions?.map((item) => (
                 <Tooltip content={<>{item.name}</>} position='top' key={item.value}>
                   <TagButton
                     className={classNames({
@@ -392,7 +392,7 @@ const Sidebar = (props) => {
               />
             </Title>
             <OptionContainer>
-              {specsOptions.map((item) => (
+              {specsOptions?.map((item) => (
                 <Tooltip content={<>{item.name}</>} position='top' key={item.value}>
                   <TagButton
                     className={classNames({
@@ -417,7 +417,7 @@ const Sidebar = (props) => {
           /> */}
             </Title>
             <OptionContainer>
-              {releaseDateOptions.map((item) => (
+              {releaseDateOptions?.map((item) => (
                 <Tooltip content={<>{item.name}</>} position='top' key={item.value}>
                   <TagButton
                     className={classNames({

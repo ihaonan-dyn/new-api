@@ -242,8 +242,8 @@ const Details = forwardRef((props, ref) => {
     }
 
     const mapUnit = {
-      '生图': ' / Image',
-      '视频': ' / Video',
+      生图: ' / Image',
+      视频: ' / Video',
     };
     // 按次收费
     let price = data.model_price * groupRatio[selectedGroup];
@@ -285,9 +285,12 @@ const Details = forwardRef((props, ref) => {
   /* 在线体验 */
   // 体验链接映射
   const experienceLinkMap = {
-    对话: () => `/playground?model=${data.model}&enable_group=${JSON.stringify(data.enable_group)}`,
-    生图: () => `/playground/image?model=${data.model}&enable_group=${JSON.stringify(data.enable_group)}`,
-    视频: () => `/playground/video?model=${data.model}&enable_group=${JSON.stringify(data.enable_group)}&tag=${data.tags[0]}`,
+    对话: () =>
+      `/playground?model=${data.model}&enable_group=${JSON.stringify(data.enable_group)}`,
+    生图: () =>
+      `/playground/image?model=${data.model}&enable_group=${JSON.stringify(data.enable_group)}`,
+    视频: () =>
+      `/playground/video?model=${data.model}&enable_group=${JSON.stringify(data.enable_group)}&tag=${data.tags[0]}`,
   };
   const handleOnlineExperience = () => {
     const linkGetter = experienceLinkMap[data.type];
@@ -305,24 +308,28 @@ const Details = forwardRef((props, ref) => {
     linkGetter && window.open(linkGetter());
   };
 
-    /* 切换语言 */
-    const mapFieldName = {
-      zh: {
-        type: 'type',
-        tags: 'tags',
-        description: 'description',
-      },
-      en: {
-        type: 'type_en',
-        tags: 'tags_en',
-        description: 'description_en',
-      },
-    };
-  
-    const handleMapFieldValue = ( field) => {
-      const key = mapFieldName[i18n.language][field];
-      return data[key];
-    };
+  /* 切换语言 */
+  const mapFieldName = {
+    'zh-CN': {
+      type: 'type',
+      tags: 'tags',
+      description: 'description',
+    },
+    zh: {
+      type: 'type',
+      tags: 'tags',
+      description: 'description',
+    },
+    en: {
+      type: 'type_en',
+      tags: 'tags_en',
+      description: 'description_en',
+    },
+  };
+  const handleMapFieldValue = (field) => {
+    const key = mapFieldName[i18n.language][field];
+    return data[key];
+  };
 
   return (
     <SideSheet
@@ -411,10 +418,12 @@ const Details = forwardRef((props, ref) => {
                 <div className='value'>{renderPriceDesc()}</div>
               </div>
             )}
-            {data.context && <div className='info-item'>
-              <div className='label'>{t('上下文')}</div>
-              <div className='value'>{data.context}</div>
-            </div>}
+            {data.context && (
+              <div className='info-item'>
+                <div className='label'>{t('上下文')}</div>
+                <div className='value'>{data.context}</div>
+              </div>
+            )}
             <div className='info-item'>
               <div className='label'>{t('发布日期')}</div>
               <div className='value'>{data.publish_time}</div>

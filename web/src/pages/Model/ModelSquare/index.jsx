@@ -412,7 +412,7 @@ const ModelSquare = () => {
         <div className='card-container common-scroll-container no-scrollbar'>
           <LoadingContent loading={isListLoading}>
             <div className='card-grid'>
-              {list.map((item, index) => (
+              {list?.map((item, index) => (
                 <div
                   className={classNames({
                     'model-card': true,
@@ -443,13 +443,13 @@ const ModelSquare = () => {
                     {/* 类型 */}
                     <div className='tag'>{handleMapFieldValue(item,'type')}</div>
                     {/* 标签 */}
-                    {handleMapFieldValue(item,'tags').map((tag) => (
+                    {handleMapFieldValue(item,'tags')?.map((tag) => (
                       <div className='tag' key={tag}>
                         {tag}
                       </div>
                     ))}
                     {/* 规格 */}
-                    {item.specification.map((tag) => (
+                    {item.specification?.map((tag) => (
                       <div className='tag' key={tag}>
                         {tag}
                       </div>
