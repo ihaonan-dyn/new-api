@@ -122,6 +122,7 @@ const LoginForm = () => {
         setUserData(data);
         updateAPI();
         showSuccess('登录成功！');
+        
         if (username === 'root' && password === '123456') {
           Modal.error({
             title: '您正在使用默认密码！',
@@ -129,7 +130,8 @@ const LoginForm = () => {
             centered: true,
           });
         }
-        navigate('/token');
+        window.location.href = '/token';
+        // navigate('/token');
       } else {
         showError(message);
       }

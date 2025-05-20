@@ -275,7 +275,6 @@ function GenerateVideo() {
         handleChangeTaskInfo({
           task_id: data.task_id,
         });
-
         taskListRef.current?.handleRefresh();
         handleTastResult();
       } catch (error) {
@@ -315,7 +314,6 @@ function GenerateVideo() {
     }
     callback();
     setUrl('');
-    taskListRef.current?.handleRefresh();
   };
 
   const handleCleartaskTimer = () => {

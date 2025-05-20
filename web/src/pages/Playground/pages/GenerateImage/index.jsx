@@ -1,6 +1,6 @@
 import LoadingContent from '@/components/LoadingContent';
 import { UserContext } from '@/context/User/index.js';
-import { API } from '@/helpers';
+import { API,showError } from '@/helpers';
 import { renderGroupOption, truncateText } from '@/helpers/render.js';
 import generateTaskStore from '@/store/generateTaskStore';
 import { IconAlertCircle, IconSend, IconSync } from '@douyinfe/semi-icons';

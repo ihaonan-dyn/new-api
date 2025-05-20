@@ -45,7 +45,7 @@ export function getFooterHTML() {
   return localStorage.getItem('footer_html');
 }
 
-export async function copy(text,tipText = '已复制到剪贴板！') {
+export async function copy(text, tipText = '已复制到剪贴板！') {
   let okay = true;
   try {
     await navigator.clipboard.writeText(text);
@@ -57,11 +57,11 @@ export async function copy(text,tipText = '已复制到剪贴板！') {
   } catch (e) {
     try {
       // 构建input 执行 复制命令
-      var _input = window.document.createElement("input");
+      var _input = window.document.createElement('input');
       _input.value = text;
       window.document.body.appendChild(_input);
       _input.select();
-      window.document.execCommand("Copy");
+      window.document.execCommand('Copy');
       window.document.body.removeChild(_input);
       Notification.info({
         duration: 3,
@@ -101,7 +101,7 @@ if (isMobile()) {
 }
 
 export function showError(error) {
-  console.error(error);
+  // console.log(error);
   if (error.message) {
     if (error.name === 'AxiosError') {
       switch (error.response.status) {
@@ -110,22 +110,27 @@ export function showError(error) {
           window.location.href = '/login?expired=true';
           break;
         case 429:
-          Toast.error('错误：请求次数过多，请稍后再试！');
+          Toast.error(t('错误：请求次数过多，请稍后再试！'));
           break;
         case 500:
-          Toast.error('错误：服务器内部错误，请联系管理员！');
+          Toast.error(t('错误：服务器内部错误，请联系管理员！'));
           break;
         case 405:
-          Toast.info('本站仅作演示之用，无服务端！');
+          Toast.info(t('本站仅作演示之用，无服务端！'));
           break;
         default:
-          Toast.error('错误：' + error.message);
+          if (error.response?.data?.error?.code === 'insufficient_user_quota') {
+            Toast.error(t('错误：') + t('余额不足'));
+            return;
+          }
+          Toast.error(t('错误：') + error.message);
       }
+
       return;
     }
-    Toast.error('错误：' + error.message);
+    Toast.error(t('错误：') + error.message);
   } else {
-    Toast.error('错误：' + error);
+    Toast.error(t('错误：') + error);
   }
 }
 
@@ -202,7 +207,7 @@ export function timestamp2string1(timestamp, dataExportDefaultTime = 'hour') {
   let day = date.getDate().toString();
   let hour = date.getHours().toString();
   if (day === '24') {
-    console.log("timestamp", timestamp);
+    console.log('timestamp', timestamp);
   }
   if (month.length === 1) {
     month = '0' + month;
@@ -257,7 +262,6 @@ export function verifyJSONPromise(value) {
     return Promise.reject('不是合法的 JSON 字符串');
   }
 }
-
 
 export function shouldShowPrompt(id) {
   let prompt = localStorage.getItem(`prompt-${id}`);
