@@ -243,7 +243,7 @@ const TaskList = forwardRef((params, ref) => {
   }, []);
   // 是否隐藏
   const isHidden = useMemo(() => {
-    return !isLoading && list.length === 0;
+    return !isLoading.current && list.length === 0;
   }, [isLoading, params, list.length]);
 
   useImperativeHandle(ref, () => {
