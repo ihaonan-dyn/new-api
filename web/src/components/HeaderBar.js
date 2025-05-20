@@ -114,7 +114,7 @@ const HeaderBar = () => {
   const [styleState, styleDispatch] = useContext(StyleContext);
   const [statusState, statusDispatch] = useContext(StatusContext);
   let navigate = useNavigate();
-  const [currentLang, setCurrentLang] = useState('zh');
+  const [currentLang, setCurrentLang] = useState(i18n.language);
 
   const systemName = getSystemName();
   const logo = getLogo();
