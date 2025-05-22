@@ -107,6 +107,7 @@ export function showError(error) {
       switch (error.response.status) {
         case 401:
           // toast.error('错误：未登录或登录已过期，请重新登录！', showErrorOptions);
+          localStorage.clear();
           window.location.href = '/login?expired=true';
           break;
         case 429:
