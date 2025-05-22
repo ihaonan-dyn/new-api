@@ -235,7 +235,11 @@ func TestChannel(c *gin.Context) {
 
 	testModel := c.Query("model")
 	tik := time.Now()
-	err, _ = testChannel(channel, testModel)
+	err, openaiWithStatusErr := testChannel(channel, testModel)
+	if openaiWithStatusErr != nil {
+		go processChannelError(nil, channel.Id, channel.Type, channel.Name, channel.GetAutoBan(), openaiWithStatusErr)
+		return
+	}
 	tok := time.Now()
 	milliseconds := tok.Sub(tik).Milliseconds()
 	go channel.UpdateResponseTime(milliseconds)
@@ -291,6 +295,7 @@ func testAllChannels(notify bool) error {
 				oaiErr := openaiWithStatusErr.Error
 				err = errors.New(fmt.Sprintf("type %s, httpCode %d, code %v, message %s", oaiErr.Type, openaiWithStatusErr.StatusCode, oaiErr.Code, oaiErr.Message))
 				shouldBanChannel = service.ShouldDisableChannel(channel.Type, openaiWithStatusErr)
+				go processChannelError(nil, channel.Id, channel.Type, channel.Name, channel.GetAutoBan(), openaiWithStatusErr)
 			}
 
 			if milliseconds > disableThreshold {
