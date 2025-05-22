@@ -146,11 +146,17 @@ func GetModels(queryParams ModelsQueryParams) ([]*Model, error) {
 
 type (
 	ModelFilters struct {
-		Types              []string            `json:"types"`
-		Tags               []string            `json:"tags"`
+		Types              []ModelType         `json:"types"`
+		Tags               []ModelTag          `json:"tags"`
 		ModelManufacturers []ModelManufacturer `json:"modelManufacturers"`
-		TypesEn            []string            `json:"types_en"`
-		TagsEn             []string            `json:"tags_en"`
+	}
+	ModelType struct {
+		Type   string `json:"type" gorm:"type"`
+		TypeEn string `json:"type_en" gorm:"type_en"`
+	}
+	ModelTag struct {
+		Tags   string `json:"tag" gorm:"tags"`
+		TagsEn string `json:"tag_en" gorm:"tags_en"`
 	}
 	ModelManufacturer struct {
 		Icon         string `json:"icon" gorm:"icon"`                 // 图标地址
@@ -160,34 +166,23 @@ type (
 
 // 获取模型类型，标签，厂商
 func GetModelFilters() (modelFilters ModelFilters) {
-	DB.Table("models").Distinct("type").Pluck("type", &modelFilters.Types)
-	DB.Table("models").Distinct("type_en").Pluck("type_en", &modelFilters.TypesEn)
+	DB.Table("models").Distinct("type,type_en").Find(&modelFilters.Types)
 
-	var tags []string
-	// Find distinct models
-	DB.Table("models").Distinct("tags").Pluck("tags", &tags)
-	tagMap := make(map[string]struct{}, 0)
+	var tags []ModelTag
+	DB.Table("models").Distinct("tags,tags_en").Find(&tags)
+	tagMap := make(map[string]string)
 	for _, tag := range tags {
-		tagArr := strings.Split(tag, ",")
-		for _, s := range tagArr {
-			tagMap[s] = struct{}{}
+		tagArr := strings.Split(tag.Tags, ",")
+		tagEnArr := strings.Split(tag.TagsEn, ",")
+		for i, s := range tagArr {
+			tagMap[s] = tagEnArr[i]
 		}
 	}
-	for key, _ := range tagMap {
-		modelFilters.Tags = append(modelFilters.Tags, key)
-	}
-
-	var tagsEn []string
-	DB.Table("models").Distinct("tags_en").Pluck("tags_en", &tagsEn)
-	tagEnMap := make(map[string]struct{}, 0)
-	for _, tag := range tagsEn {
-		tagArr := strings.Split(tag, ",")
-		for _, s := range tagArr {
-			tagEnMap[s] = struct{}{}
-		}
-	}
-	for key, _ := range tagEnMap {
-		modelFilters.TagsEn = append(modelFilters.TagsEn, key)
+	for tag, tagEn := range tagMap {
+		modelFilters.Tags = append(modelFilters.Tags, ModelTag{
+			Tags:   tag,
+			TagsEn: tagEn,
+		})
 	}
 
 	DB.Table("models").Select("DISTINCT(manufacturer), icon").Find(&modelFilters.ModelManufacturers)
