@@ -14,7 +14,7 @@ import {
 } from '@douyinfe/semi-ui';
 import classNames from 'classnames';
 import { t } from 'i18next';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import PageContainer from './Styled';
 import { UNFINISHED_TASK_STATUS } from '../../utils';
@@ -52,6 +52,9 @@ function GenerateImage() {
       enable_group: ['default']
     },
   ]);
+  /* 分组字典 */
+  // 模型映射分组
+  const modelMapGroup= useRef(new Map());
 
   const handleGetModelOptions = async () => {
     const params = {
@@ -62,6 +65,7 @@ function GenerateImage() {
       const { data:{data,success} } = await API.post('/api/model_list', params);
       if (success && data.length) {
         setModelOptions(data);
+        modelMapGroup.current = new Map(data.map((item) => [item.model, item.enable_group]));
         const { enable_group } = data[0];
         if(!model){
           handleInputChange('model', data[0].model);
@@ -277,16 +281,17 @@ function GenerateImage() {
           <div className={'content'}>
             <Select
               onChange={(value) => {
-                handleInputChange('model', value.model);
-                if( value.enable_group){
-                  setEnable_group(value.enable_group);
-                  handleInputChange('group', value.enable_group[0]);
+                handleInputChange('model', value);
+                const enable_group = modelMapGroup.current.get(value);
+                if( enable_group){
+                  setEnable_group(enable_group);
+                  handleInputChange('group', enable_group[0]);
                 }
               }}
               value={inputs.model}
             >
               {modelOptions.map((item) => (
-                <Select.Option key={item.model} value={item}>
+                <Select.Option key={item.model} value={item.model}>
                   {item.model}
                 </Select.Option>
               ))}
