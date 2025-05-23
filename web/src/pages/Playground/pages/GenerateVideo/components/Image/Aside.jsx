@@ -12,6 +12,9 @@ const ImageAside = ({
     modelOptions,
     setEnableGroup
 }) => {
+  const modelMapGroup = useMemo(()=>{
+    return new Map(modelOptions.map(((item) => [item.model, item.enable_group])))
+  },[modelOptions]);
   const groupsOptions = useMemo(() => {
     if (!groupDict || !enableGroup?.length) {
       return [];
@@ -79,16 +82,17 @@ const ImageAside = ({
         <div className={'content'}>
           <Select
             onChange={(value) => {
+              const enable_group = modelMapGroup.get(value);
               handleChangInputs({
-                model: value.model,
-                group: value.enable_group[0],
+                model: value,
+                group: enable_group[0],
               });
-              setEnableGroup(value.enable_group);
+              setEnableGroup(enable_group);
             }}
             value={inputVaue.model}
           >
             {modelOptions.map((item) => (
-              <Select.Option key={item.model} value={item}>
+              <Select.Option key={item.model} value={item.model}>
                 {item.model}
               </Select.Option>
             ))}
