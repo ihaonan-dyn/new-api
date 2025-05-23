@@ -17,6 +17,7 @@ import { t } from 'i18next';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import PageContainer from './Styled';
+import { UNFINISHED_TASK_STATUS } from '../../utils';
 
 let taskTimer = null;
 function GenerateImage() {
@@ -206,20 +207,20 @@ function GenerateImage() {
       const { data } = await API.get(
         `/pg/images/generations/${generateTaskStore.imageGenerationState.task_id}`,
       );
-      if (data.fail_reason) {
-        setSubmitLoading(false);
+      if (UNFINISHED_TASK_STATUS.has(data.task_status)) {
+        taskTimer = setTimeout(() => {
+          handleTastResult();
+        }, 5000);
         return;
       }
+      setSubmitLoading(false);
+      handleCleartaskTimer();
       if (data.task_status === 'SUCCESS') {
-        setSubmitLoading(false);
         setUrl(data.task_result.url); // 触发组件重渲染，更新 taskInfo.urlLis
         handleCleartaskTimer();
         return;
       }
-      handleCleartaskTimer();
-      taskTimer = setTimeout(() => {
-        handleTastResult();
-      }, 5000);
+  
     } catch (error) {}
   };
 

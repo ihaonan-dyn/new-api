@@ -1502,5 +1502,6 @@
   "链接已复制！": "Link copied!",
   "对话": "Chat",
   "生图": "Image",
-  "视频": "Video"
+  "视频": "Video",
+  "上一个视频生成任务未完成，暂不能发起新的视频生成任务": "The previous video generation task is not completed, a new video generation task cannot be initiated"
 }

@@ -39,6 +39,7 @@ import { stringToColor } from '../helpers/render';
 import Text from '@douyinfe/semi-ui/lib/es/typography/text';
 import { StyleContext } from '../context/Style/index.js';
 import { StatusContext } from '../context/Status/index.js';
+import { setCookie } from '../helpers/auth.js';
 
 // 自定义顶部栏样式
 const headerStyle = {
@@ -172,6 +173,7 @@ const HeaderBar = () => {
     showSuccess(t('注销成功!'));
     userDispatch({ type: 'logout' });
     localStorage.clear();
+    setCookie('');
     navigate('/login');
   }
 

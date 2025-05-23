@@ -16,6 +16,7 @@ import classNames from 'classnames';
 import { enableInfiniteScroll, formatDate } from 'yd-web-utils'; //引入插件
 import LoadingContent from '@/components/LoadingContent';
 import { t } from 'i18next';
+import { UNFINISHED_TASK_STATUS } from '../../../../utils';
 
 const TaskListContainer = styled.div`
   width: 300px;
@@ -169,6 +170,8 @@ const renderStatus = (type) => {
  * task_id: string,
  * };
  * handleChangeTask: (taskItem:{}) => void;
+ * setIsHasUnfinishedTask: (val: boolean)=>void
+ * handleGetTaskResult: (data:{})=>void
  * } params
  */
 const TaskList = forwardRef((params, ref) => {
@@ -177,14 +180,14 @@ const TaskList = forwardRef((params, ref) => {
   const handleUpdate = () => {
     setState({});
   };
-  const { handleChangeTask } = params;
+  const { handleChangeTask, setIsHasUnfinishedTask } = params;
 
   const isLoading = useRef(true);
   const [searchParams, setSearchParams] = useState({
     pageNum: 1,
     pageSize: 10,
   });
-  const [list, setList] = useState([]);
+  const list = useRef([]);
   // 获取任务列表
   const handleTaskList = async () => {
     isLoading.current = true;
@@ -194,30 +197,60 @@ const TaskList = forwardRef((params, ref) => {
       });
       isMore = data.length >= searchParams.pageSize;
       if (searchParams.pageNum === 1) {
-        setList(data);
+        list.current = data;
       } else {
-        setList((pre) => {
-          return pre.concat(data);
-        });
+        list.current =list.current.concat(data);
       }
+      handleUpdate();
       // 初始化赋值
-      if(isFirst.current && !location.search){
+      if (isFirst.current && !location.search) {
         isFirst.current = false;
-        handleChangeTask(data[0]);
-        !params.task_id && data.length > 0 && handleChangeTask(data[0]);
+        if (data.length > 0) {
+          const item = data[0];
+          UNFINISHED_TASK_STATUS.has(item.status) && handleStartTastResult(item.task_id);
+          !params.task_id && handleChangeTask(item);
+        }
       }
     } catch (error) {}
     isLoading.current = false;
   };
+  const taskTimer = useRef(null);
+  const handleCleartaskTimer = () => {
+    if (taskTimer.current) {
+      clearTimeout(taskTimer.current);
+      taskTimer.current = null;
+    }
+  };
 
-  /**
-   * 更改任务
-   * @param {(list:any[])=>any[]} callback 回调函数
-   */
-  const handleUpdateTask = (callback) => {
-    const newList = callback(list);
-    setList(newList);
-    handleUpdate();
+  /* 轮询最后一个任务的状态 */
+  const handleStartTastResult = (task_id) => {
+    setIsHasUnfinishedTask(true);
+    handleTastResult(task_id);
+  }
+  const [itemStatus, setItemStatus] = useState("");
+  const handleTastResult = async (task_id) => {
+    handleCleartaskTimer();
+    try {
+      const { data } = await API.get(`/pg/videos/generations/${task_id}`);
+      const item = list.current[0];
+      item.status = data.task_status;
+      // console.log('data.task_status',data.task_status);
+      // console.log('item.input.prompt',item.input.prompt);
+      setItemStatus(data.task_status);
+      // 未完成任务状态
+      if (UNFINISHED_TASK_STATUS.has(data.task_status)) {
+        handleCleartaskTimer();
+        taskTimer.current = setTimeout(() => {
+          handleTastResult(task_id);
+        }, 5000);
+        return;
+      }
+      // 已完成任务状态
+      setIsHasUnfinishedTask(false);
+    } catch (error) {
+      handleCleartaskTimer();
+      setIsHasUnfinishedTask(false);
+    }
   };
 
   /* 触底加载 */
@@ -239,12 +272,13 @@ const TaskList = forwardRef((params, ref) => {
     );
     return () => {
       infiniteScrollClose && infiniteScrollClose.close();
+      handleCleartaskTimer();
     };
   }, []);
   // 是否隐藏
   const isHidden = useMemo(() => {
-    return !isLoading.current && list.length === 0;
-  }, [isLoading, params, list.length]);
+    return !isLoading.current && list.current.length === 0;
+  }, [isLoading, params, list.current.length]);
 
   useImperativeHandle(ref, () => {
     return {
@@ -255,7 +289,7 @@ const TaskList = forwardRef((params, ref) => {
         });
         handleTaskList();
       },
-      handleUpdateTask,
+      handleStartTastResult
     };
   });
 
@@ -271,7 +305,7 @@ const TaskList = forwardRef((params, ref) => {
       })}
     >
       <LoadingContent loading={isLoading.current}>
-        {list.map((task) => (
+        {list.current.map((task) => (
           <TaskItem
             key={task.task_id}
             className={classNames({
@@ -309,5 +343,6 @@ const TaskList = forwardRef((params, ref) => {
     </TaskListContainer>
   );
 });
+
 
 export default TaskList;

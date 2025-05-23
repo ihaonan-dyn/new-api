@@ -1,6 +1,6 @@
 import LoadingContent from '@/components/LoadingContent';
 import { UserContext } from '@/context/User/index';
-import { API } from '@/helpers';
+import { API,showError } from '@/helpers';
 import { renderGroupOption, truncateText } from '@/helpers/render.js';
 import { IconAlertCircle, IconSend } from '@douyinfe/semi-icons';
 import {
@@ -26,6 +26,8 @@ import TaskList from './components/TaskList';
 import PageContainer from './Styled';
 import TextAside from './components/Text/Aside';
 import ImageAside from './components/Image/Aside';
+import { UNFINISHED_TASK_STATUS } from '../../utils';
+import { debounce } from 'yd-web-utils';
 
 let taskTimer = null;
 
@@ -261,6 +263,22 @@ function GenerateVideo() {
     }
     handleTastResult();
   };
+  /* 开始任务的后置操作 */
+  const handleStartTaskError = ()=>{
+    setIsHasUnfinishedTask(false);
+    setSubmitLoading(false);
+  }
+  // 开始任务成功
+  const handleStartTaskSuccess = (data)=>{
+    setUrl('')
+    taskInfo.task_id = data.task_id;
+    handleChangeTaskInfo({
+      task_id: data.task_id,
+    });
+    taskListRef.current?.handleRefresh();
+    taskListRef.current?.handleStartTastResult(data.task_id);
+    handleTastResult();
+  }
   // 任务处理分支
   const startTaskHandlerMap = {
     // 文生视频
@@ -271,14 +289,9 @@ function GenerateVideo() {
           ...videoFromTextInputs,
           prompt,
         });
-        taskInfo.task_id = data.task_id;
-        handleChangeTaskInfo({
-          task_id: data.task_id,
-        });
-        taskListRef.current?.handleRefresh();
-        handleTastResult();
+        return Promise.resolve(data);
       } catch (error) {
-        setSubmitLoading(false);
+        return Promise.reject();
       }
     },
     // 图生视频
@@ -292,29 +305,31 @@ function GenerateVideo() {
           ...videoFromImageInputs,
           prompt,
         });
-        taskInfo.task_id = data.task_id;
-        handleChangeTaskInfo({
-          task_id: data.task_id,
-        });
-        taskListRef.current?.handleRefresh();
-        handleTastResult();
+        return Promise.resolve(data);
       } catch (error) {
-        setSubmitLoading(false);
+        return Promise.reject();
       }
     },
   };
   // 开始任务
-  const handleStartTask = async () => {
-    if (!prompt) {
+  const handleStartTask = debounce(async () => {
+    if(isDisabledSend){
+      if (!prompt) {
+        showError(t('请输入提示词'));
+      }else
+      if(isHasUnfinishedTask){
+        showError(t('上一个视频生成任务未完成，暂不能发起新的视频生成任务'));
+      }
       return;
     }
+
     const callback = startTaskHandlerMap[type];
     if (!callback) {
       return;
     }
-    callback();
-    setUrl('');
-  };
+    setIsHasUnfinishedTask(true);
+    callback().then(handleStartTaskSuccess).catch(handleStartTaskError);
+  },300);
 
   const handleCleartaskTimer = () => {
     if (taskTimer === null) {
@@ -331,26 +346,23 @@ function GenerateVideo() {
       const { data } = await API.get(
         `/pg/videos/generations/${taskInfo.task_id}`,
       );
-      if (data.fail_reason) {
-        setSubmitLoading(false);
-        return;
-      }
-      if (data.task_status === 'SUCCESS') {
+      
+      // 未完成任务状态
+      if(UNFINISHED_TASK_STATUS.has(data.task_status)){
         handleCleartaskTimer();
-        setSubmitLoading(false);
-        setUrl(data.task_result.url);
-        taskListRef.current?.handleUpdateTask((list) => {
-          const item = list.find((item) => item.task_id === taskInfo.task_id);
-          item.task_status = 'SUCCESS';
-          return list;
-        });
-
+        taskTimer = setTimeout(() => {
+          handleTastResult();
+        }, 5000);
         return;
       }
+      // 已完成任务状态
+      setSubmitLoading(false);
       handleCleartaskTimer();
-      taskTimer = setTimeout(() => {
-        handleTastResult();
-      }, 5000);
+      if (data.task_status === 'SUCCESS') {
+        setUrl(data.task_result.url);
+        return;
+      }
+
     } catch (error) {
       handleCleartaskTimer();
       setSubmitLoading(false);
@@ -369,13 +381,17 @@ function GenerateVideo() {
     };
   }, []); // 只在组件挂载时执行
 
+  // 是否有未完成任务
+  const [isHasUnfinishedTask, setIsHasUnfinishedTask] = useState(false);
   const isDisabledSend = useMemo(() => {
+    let flag = true;
     if (type === TypeEnum.image) {
-      return !prompt || !videoFromImageInputs.img_url;
+      flag = !prompt || !videoFromImageInputs.img_url;
     }
 
-    return !prompt;
-  }, [prompt, type, videoFromImageInputs.img_url]);
+    flag = !prompt;
+    return isHasUnfinishedTask ||  flag;
+  }, [prompt, type, videoFromImageInputs.img_url,isHasUnfinishedTask]);
 
   return (
     <PageContainer>
@@ -457,6 +473,7 @@ function GenerateVideo() {
         </div>
       </main>
       <TaskList
+        setIsHasUnfinishedTask={setIsHasUnfinishedTask}
         task_id={taskInfo.task_id}
         handleChangeTask={handleChangeTask}
         ref={taskListRef}
