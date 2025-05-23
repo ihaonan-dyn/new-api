@@ -295,3 +295,8 @@ code {
   border-radius: 3px;
   cursor: pointer;
 }
+
+/* 对话组件 */
+.semi-chat-chatBox {
+  overflow-y: auto;
+}

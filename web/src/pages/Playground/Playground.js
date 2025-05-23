@@ -3,6 +3,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -93,6 +94,9 @@ const Playground = () => {
       ]
     },
   ]);
+  /* 分组字典 */
+//  模型映射分组
+  const modelMapGroup= useRef(new Map());
   const [showSettings, setShowSettings] = useState(true);
   const [styleState, styleDispatch] = useContext(StyleContext);
 
@@ -122,6 +126,7 @@ const Playground = () => {
       const { data:{data,success} } = await API.post('/api/model_list', params);
       if (success && data.length) {
         setModels(data);
+        modelMapGroup.current = new Map(data.map((item) => [item.model, item.enable_group]));
         const { enable_group } = data[0];
      
         if(!model){
@@ -230,7 +235,6 @@ const Playground = () => {
 
   const onMessageSend = useCallback(
     (content, attachment) => {
-      console.log('attachment: ', attachment);
       setMessage((prevMessage) => {
         const newMessage = [
           ...prevMessage,
@@ -399,17 +403,19 @@ const Playground = () => {
               searchPosition='dropdown'
               filter
               onChange={(value) => {
-                handleInputChange('model', value.model);
-                if( value.enable_group){
-                  setEnable_group(value.enable_group);
-                  handleInputChange('group', value.enable_group[0]);
+     
+                handleInputChange('model', value);
+                const enable_group = modelMapGroup.current.get(value);
+                if( enable_group){
+                  setEnable_group(enable_group);
+                  handleInputChange('group', enable_group[0]);
                 }
               }}
               value={inputs.model}
               autoComplete='new-password'
             >
               {models.map((item) => (
-                <Select.Option key={item.model} value={item}>
+                <Select.Option key={item.model} value={item.model}>
                   {item.model}
                 </Select.Option>
               ))}
@@ -451,6 +457,7 @@ const Playground = () => {
               autoComplete='new-password'
               autosize
               defaultValue={systemPrompt}
+              rows={6}
               // value={systemPrompt}
               onChange={(value) => {
                 setSystemPrompt(value);
