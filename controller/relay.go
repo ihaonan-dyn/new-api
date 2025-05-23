@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 	"io"
 	"log"
 	"net/http"
@@ -21,6 +19,9 @@ import (
 	"one-api/service"
 	"strconv"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 func relayHandler(c *gin.Context, relayMode int) *dto.OpenAIErrorWithStatusCode {
@@ -291,10 +292,11 @@ func shouldRetry(c *gin.Context, openaiErr *dto.OpenAIErrorWithStatusCode, retry
 type ChannelErr struct {
 	MsgType string `json:"msg_type"`
 	Content struct {
-		CID     string `json:"cId"`
-		CType   string `json:"cType"`
-		CName   string `json:"cName"`
-		Message string `json:"message"`
+		Platform string `json:"platform"` // 新增平台字段
+		CID      string `json:"cId"`
+		CType    string `json:"cType"`
+		CName    string `json:"cName"`
+		Message  string `json:"message"`
 	} `json:"content"`
 }
 
@@ -305,23 +307,23 @@ func processChannelError(c *gin.Context, channelId int, channelType int, channel
 	if service.ShouldDisableChannel(channelType, err) && autoBan {
 		service.DisableChannel(channelId, channelName, err.Error.Message)
 	}
-
 	go func() {
 		channelErr := &ChannelErr{
 			MsgType: "text",
 			Content: struct {
-				CID     string `json:"cId"`
-				CType   string `json:"cType"`
-				CName   string `json:"cName"`
-				Message string `json:"message"`
+				Platform string `json:"platform"` // 新增平台字段
+				CID      string `json:"cId"`
+				CType    string `json:"cType"`
+				CName    string `json:"cName"`
+				Message  string `json:"message"`
 			}{
-				CID:     strconv.Itoa(channelId),
-				CType:   strconv.Itoa(channelType),
-				CName:   channelName,
-				Message: err.Error.Message,
+				Platform: "GenboAPI开放平台", // 设置默认平台
+				CID:      strconv.Itoa(channelId),
+				CType:    strconv.Itoa(channelType),
+				CName:    channelName,
+				Message:  err.Error.Message,
 			},
 		}
-
 		//序列化channelErr
 		channelErrJson, _ := json.Marshal(channelErr)
 		err1 := SendMessage("https://www.feishu.cn/flow/api/trigger-webhook/461672a3df203f72373e1ec96cdde4c5", string(channelErrJson))
