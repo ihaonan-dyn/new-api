@@ -2,7 +2,7 @@ import { API } from '@/helpers';
 import { renderGroupOption, truncateText } from '@/helpers/render.js';
 import { Button, Image, Select, Typography } from '@douyinfe/semi-ui';
 import { t } from 'i18next';
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 
 const ImageAside = ({
     groupDict,
@@ -126,4 +126,4 @@ const ImageAside = ({
   );
 };
 
-export default ImageAside;
+export default memo(ImageAside);

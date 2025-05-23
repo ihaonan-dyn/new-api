@@ -3,7 +3,7 @@ import { IconAlertCircle } from '@douyinfe/semi-icons';
 import { Select, Tooltip, Typography } from '@douyinfe/semi-ui';
 import classNames from 'classnames';
 import { t } from 'i18next';
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 const sizeOptions = [
   {
@@ -55,6 +55,9 @@ const TextAside = ({
   inputVaue,
   setEnableGroup
 }) => {
+  const modelMapGroup = useMemo(()=>{
+    return new Map(modelOptions.map(((item) => [item.model, item.enable_group])))
+  },[modelOptions]);
   const groupsOptions = useMemo(() => {
     if (!groupDict || !enableGroup?.length) {
       return [];
@@ -105,16 +108,17 @@ const TextAside = ({
         <div className={'content'}>
           <Select
             onChange={(value) => {
+              const enable_group = modelMapGroup.get(value);
               handleChangeInputs({
-                model: value.model,
-                group: value.enable_group[0],
+                model: value,
+                group: enable_group[0],
               });
-              setEnableGroup(value.enable_group);
+              setEnableGroup(enable_group);
             }}
             value={inputVaue.model}
           >
             {modelOptions.map((item) => (
-              <Select.Option key={item.model} value={item}>
+              <Select.Option key={item.model} value={item.model}>
                 {item.model}
               </Select.Option>
             ))}
@@ -161,4 +165,4 @@ const TextAside = ({
   );
 };
 
-export default TextAside;
+export default memo(TextAside);
