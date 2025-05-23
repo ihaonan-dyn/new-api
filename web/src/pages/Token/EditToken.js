@@ -169,6 +169,10 @@ const EditToken = (props) => {
   };
 
   const submit = async () => {
+    if(!inputs.name.trim()) {
+      showError(t('名称不能为空！'));
+      return;
+    }
     setLoading(true);
     if (isEdit) {
       // 编辑令牌的逻辑保持不变
