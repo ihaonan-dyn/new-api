@@ -236,7 +236,10 @@ func TestChannel(c *gin.Context) {
 	testModel := c.Query("model")
 	tik := time.Now()
 	err, openaiWithStatusErr := testChannel(channel, testModel)
-	if openaiWithStatusErr != nil {
+	if err != nil {
+		if openaiWithStatusErr == nil {
+			openaiWithStatusErr = service.OpenAIErrorWrapperLocal(err, "get_channel_failed", http.StatusInternalServerError)
+		}
 		go processChannelError(nil, channel.Id, channel.Type, channel.Name, channel.GetAutoBan(), openaiWithStatusErr)
 		return
 	}
@@ -285,6 +288,7 @@ func testAllChannels(notify bool) error {
 			isChannelEnabled := channel.Status == common.ChannelStatusEnabled
 			tik := time.Now()
 			err, openaiWithStatusErr := testChannel(channel, "")
+
 			tok := time.Now()
 			milliseconds := tok.Sub(tik).Milliseconds()
 
@@ -295,7 +299,6 @@ func testAllChannels(notify bool) error {
 				oaiErr := openaiWithStatusErr.Error
 				err = errors.New(fmt.Sprintf("type %s, httpCode %d, code %v, message %s", oaiErr.Type, openaiWithStatusErr.StatusCode, oaiErr.Code, oaiErr.Message))
 				shouldBanChannel = service.ShouldDisableChannel(channel.Type, openaiWithStatusErr)
-				go processChannelError(nil, channel.Id, channel.Type, channel.Name, channel.GetAutoBan(), openaiWithStatusErr)
 			}
 
 			if milliseconds > disableThreshold {
@@ -311,6 +314,13 @@ func testAllChannels(notify bool) error {
 			// enable channel
 			if !isChannelEnabled && service.ShouldEnableChannel(err, openaiWithStatusErr, channel.Status) {
 				service.EnableChannel(channel.Id, channel.Name)
+			}
+
+			if err != nil {
+				if openaiWithStatusErr == nil {
+					openaiWithStatusErr = service.OpenAIErrorWrapperLocal(err, "get_channel_failed", http.StatusInternalServerError)
+				}
+				go processChannelError(nil, channel.Id, channel.Type, channel.Name, channel.GetAutoBan(), openaiWithStatusErr)
 			}
 
 			channel.UpdateResponseTime(milliseconds)

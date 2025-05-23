@@ -76,8 +76,14 @@ func logHelper(ctx context.Context, level string, msg string) {
 	}
 	var id any = "unknown-u"
 	if ctx != nil {
-		id = ctx.Value(RequestIdKey)
+		// 关键点：尝试将 ctx 转换为 *gin.Context 并检查是否为 nil
+		if ginCtx, ok := ctx.(*gin.Context); ok && ginCtx != nil {
+			if val, ok := ginCtx.Value(RequestIdKey).(string); ok {
+				id = val
+			}
+		}
 	}
+
 	now := time.Now()
 	_, _ = fmt.Fprintf(writer, "[%s] %v | %s | %s \n", level, now.Format("2006/01/02 - 15:04:05"), id, msg)
 	logCount++ // we don't need accurate count, so no lock here
