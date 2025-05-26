@@ -3,6 +3,7 @@ import { toastConstants } from '../constants';
 import React from 'react';
 import { toast } from 'react-toastify';
 import { t } from 'i18next';
+import { setCookie } from '../helpers/auth.js';
 
 const HTMLToastContent = ({ htmlContent }) => {
   return <div dangerouslySetInnerHTML={{ __html: htmlContent }} />;
@@ -107,6 +108,7 @@ export function showError(error) {
       switch (error.response.status) {
         case 401:
           // toast.error('错误：未登录或登录已过期，请重新登录！', showErrorOptions);
+          setCookie('');
           localStorage.clear();
           window.location.href = '/login?expired=true';
           break;
